@@ -29,8 +29,13 @@ find_package(Vulkan REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 
 # --- ASSIMP DEPENDENCY ---
+# If assimp fails to build (especially with vcpkg), make sure to install draco first
 
 find_package(assimp CONFIG REQUIRED)
 
-target_link_libraries(runtime PRIVATE SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan assimp::assimp)
-target_link_libraries(editor PRIVATE SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan assimp::assimp)
+# --- GLM DEPENDENCY ---
+
+find_package(glm CONFIG REQUIRED)
+
+target_link_libraries(runtime PRIVATE SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan assimp::assimp glm::glm)
+target_link_libraries(editor PRIVATE SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan assimp::assimp glm::glm)

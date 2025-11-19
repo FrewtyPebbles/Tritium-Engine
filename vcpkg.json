@@ -5,6 +5,7 @@
   "dependencies": [
     "sdl2",
     "draco",
-    "assimp"
+    "assimp",
+    "glm"
   ]
 }
