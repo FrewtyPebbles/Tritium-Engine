@@ -45,3 +45,4 @@ vcpkg_installed/
 out/
 CMakeUserPresets.json
 .vs/
+CMakeCache.txt
