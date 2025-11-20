@@ -1,4 +1,0 @@
-/home/fish/Downloads/GithubProjects/GameEngine/CMakeFiles/runtime.dir
-/home/fish/Downloads/GithubProjects/GameEngine/CMakeFiles/editor.dir
-/home/fish/Downloads/GithubProjects/GameEngine/CMakeFiles/edit_cache.dir
-/home/fish/Downloads/GithubProjects/GameEngine/CMakeFiles/rebuild_cache.dir

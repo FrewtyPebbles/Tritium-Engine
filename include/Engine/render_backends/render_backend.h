@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <unordered_map>
+#include <SDL2/SDL.h>
 
 // --- RenderBackend --- 
 // This class is derived to create the progressive and compatibility render backends.
@@ -14,6 +15,13 @@ public:
 /////////////////////
 ///// FUNCTIONS /////
 /////////////////////
+
+// ==== Class Functions ====
+// These include things like constructors, destructors and operators.
+// ---
+
+	RenderBackend();
+	// default settings?
 
 // ==== Window Functions ====
 // These functions are related to the SDL window that the backend renders onto.
@@ -28,11 +36,16 @@ public:
 // Includes game loop hook functions like "_on_update(float deltaTime)"
 // ---
 
+	// = Time / Time Scale Functions = 
+	// These are for getting and setting different time / time scale parameters.
+	// --
 	
 	float get_delta_time();
 	long int get_time_seconds();
 	long int get_time_milliseconds();
 	long int get_time_nanoseconds();
+	void set_fixed_update_ticks_per_second(int ticksPerSecond);
+	/// sets the amount of updates per second.
 
 
 	// = Callback Functions = 
@@ -52,9 +65,6 @@ public:
 	void remove_on_fixed_update_callback(int nodeID);
 	/// Fixed update is an update loop that runs every game tick
 	// mostly used for physics updates
-
-	void set_fixed_update_ticks_per_second(int ticksPerSecond);
-	/// sets the amount of updates per second.
 
 //////////////////////
 ///// ATTRIBUTES /////
@@ -98,5 +108,13 @@ private:
 	long int time_milliseconds;
 	long int time_nanoseconds;
 	int fixed_update_ticks_per_second;
+
+// === SDL2 ===
+
+	// = Window =
+	// everything related to window management
+	// --
+
+	SDL_Window* sdl_window;
 
 };
