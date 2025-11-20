@@ -9,6 +9,8 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
+# --- SET PROJECT NAME ---
+
 project ("GameEngine")
 
 # --- RUNTIME SOURCES ---
@@ -16,21 +18,34 @@ project ("GameEngine")
 file(GLOB_RECURSE RUNTIME_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
 )
-list(REMOVE_ITEM RUNTIME_SOURCES "${CMAKE_SOURCE_DIR}/src/editor/main.cpp")
+list(REMOVE_ITEM RUNTIME_SOURCES
+    "${CMAKE_SOURCE_DIR}/src/editor/main.cpp"
+)
 
 # --- EDITOR SOURCES ---
 
 file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
 )
-list(REMOVE_ITEM EDITOR_SOURCES "${CMAKE_SOURCE_DIR}/src/runtime/main.cpp")
+list(REMOVE_ITEM EDITOR_SOURCES
+    "${CMAKE_SOURCE_DIR}/src/runtime/main.cpp"
+)
 
-# Add source to this project's executable.
+# --- CREATE EXECUTABLE TARGETS ---
+
 add_executable (runtime ${RUNTIME_SOURCES})
 add_executable (editor ${EDITOR_SOURCES})
 
-target_include_directories(runtime PRIVATE include)
-target_include_directories(editor PRIVATE include)
+# --- ADD INCLUDE DIRECTORY ---
+
+target_include_directories(runtime PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+)
+target_include_directories(editor PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+)
+
+# --- SET C++ STANDARD TO C++ 20 ---
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET runtime PROPERTY CXX_STANDARD 20)
@@ -54,5 +69,13 @@ find_package(assimp CONFIG REQUIRED)
 
 find_package(glm CONFIG REQUIRED)
 
-target_link_libraries(runtime PRIVATE SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan assimp::assimp glm::glm)
-target_link_libraries(editor PRIVATE SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan assimp::assimp glm::glm)
+# --- LINK DEPENDENCIES ---
+
+target_link_libraries(runtime PRIVATE
+    SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan
+    assimp::assimp glm::glm
+)
+target_link_libraries(editor PRIVATE
+    SDL2::SDL2 SDL2::SDL2main Vulkan::Vulkan
+    assimp::assimp glm::glm
+)
