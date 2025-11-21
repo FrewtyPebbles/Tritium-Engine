@@ -9,6 +9,9 @@
 
 bool RenderBackend::start_window(string window_title, int window_width, int window_height) {
 	// This function is the function which starts the end user's application.
+
+	// Initialize any state nessecary for the derived RenderBackend before SDL is initialized.
+	this->before_start_window(window_title, window_width, window_height);
 	
 	// === Start SDL2 ===
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -20,7 +23,7 @@ bool RenderBackend::start_window(string window_title, int window_width, int wind
 		window_title.c_str(),
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		window_width, window_height,
-		SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE
+		this->sdl_window_flags
 	);
 
 	if (!this->sdl_window) {

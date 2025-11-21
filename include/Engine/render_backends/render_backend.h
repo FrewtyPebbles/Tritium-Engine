@@ -24,7 +24,7 @@ public:
 // These include things like constructors, destructors and operators.
 // ---
 
-	RenderBackend();
+	RenderBackend() {};
 	/// default settings?
 
 // ==== Window Functions ====
@@ -41,7 +41,7 @@ public:
 // Overload these functions depending on the render engine	
 // ---
 
-	bool virtual create_device();
+	bool virtual create_device() = 0;
 
 // = Base Functions =
 // ---
@@ -87,17 +87,18 @@ public:
 ///// ATTRIBUTES /////
 //////////////////////
 
-private:
+protected:
 
 /////////////////////
 ///// FUNCTIONS /////
 /////////////////////
 
-// === Time / Draw Loops ===
+// === Window Functions ===
 
-	void start_game_loop();
-	/// Initializes the game state and starts the game loop which calls update_game.
-	// Loads in the initial scene file.
+	virtual void before_start_window(string window_title, int window_width, int window_height) = 0;
+	/// This runs at the start of `start_window` incase anything needs to be initialized in derived classes.
+
+// === Game Loop ===
 
 	virtual void before_game_loop() = 0;
 	/// This runs before the game while loop start in `start_game_loop`
@@ -115,6 +116,37 @@ private:
 	// This will be implemented in derived classes.
 	// It may call functions from the base class for shared logic between
 	// render backends.
+
+//////////////////////
+///// ATTRIBUTES /////
+//////////////////////
+
+// === SDL2 ===
+
+	// = Window =
+	// everything related to window management
+	// --
+
+	SDL_Window* sdl_window;
+
+	Uint32 sdl_window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;
+	/// This will be set to something different depending on the graphics API(s) that the backend uses.
+
+// === Game Loop ===
+
+	bool window_running = false;
+
+private:
+
+/////////////////////
+///// FUNCTIONS /////
+/////////////////////
+
+// === Time / Draw Loops ===
+
+	void start_game_loop();
+	/// Initializes the game state and starts the game loop which calls update_game.
+	// Loads in the initial scene file.
 
 	void SDL_event_handler(SDL_Event event);
 	/// This passes SDL_events to their hooks or wherever they need to go.
@@ -151,13 +183,6 @@ private:
 	int fixed_update_ticks_per_second;
 
 // === SDL2 ===
-
-	// = Window =
-	// everything related to window management
-	// --
-
-	SDL_Window* sdl_window;
-	bool window_running = false;
 
 	// = Events =
 	SDL_Event sdl_event;
