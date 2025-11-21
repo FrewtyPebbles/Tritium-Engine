@@ -3,6 +3,7 @@
 #include <functional>
 #include <unordered_map>
 #include <SDL2/SDL.h>
+#include <vulkan/vulkan.h>
 #include <string>
 
 using std::string;
@@ -35,7 +36,18 @@ public:
 	/// Returns false on failure, check cerr.  Maybe prompt the user to make a github issue.
 
 	void close_window();
-	
+
+// ==== Render Functions ====
+// Overload these functions depending on the render engine	
+// ---
+
+	bool virtual create_device();
+
+// = Base Functions =
+// ---
+	bool pick_physical_device();
+	void bind_to_window(SDL_Window*);
+
 // === Game Loop Functions ===
 // These are functions related to the game loop.
 // Includes game loop hook functions like "_on_update(float deltaTime)"
@@ -149,5 +161,13 @@ private:
 
 	// = Events =
 	SDL_Event sdl_event;
+
+// === VULKAN ===
+	
+	// required vulkan attributes
+	VkInstance instance = VK_NULL_HANDLE;
+	VkSurfaceKHR surface = VK_NULL_HANDLE;
+	VkPhysicalDevice physical_device = VK_NULL_HANDLE;
+	VkDevice device = VK_NULL_HANDLE;
 
 };

@@ -74,6 +74,11 @@ void RenderBackend::start_game_loop() {
 	this->after_game_loop();
 }
 
+// !!! TEMP FUNCTIONS SO I CAN BUILD !!!
+void RenderBackend::SDL_event_handler(SDL_Event){}
+void RenderBackend::execute_on_draw_update_callbacks(){}
+// !!! TEMP FUNCTIONS SO I CAN BUILD !!!
+
 // === Callback Functions ===
 
 void RenderBackend::add_on_draw_update_callback(int nodeID, std::function<void(float)> callback) {
