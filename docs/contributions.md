@@ -46,4 +46,4 @@ There will also likely be a Kanban board on the github.
 
 ## More Info
 
-For useful information describing engine architecture for contributions see `docs/contributions`
+For useful information describing guidelines and engine architecture for contributions see `docs/contributions`
