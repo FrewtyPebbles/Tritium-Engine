@@ -102,5 +102,16 @@ bool ProgressiveRenderBackend::vk_create_instance() {
 		return false;
 	}
 
+	//find a physical device for vulkan;
+
+	uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(this->vk_instance, &deviceCount, nullptr);
+
+    std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
+    vkEnumeratePhysicalDevices(this->vk_instance, &deviceCount, physicalDevices.data());
+
+    // Iterate through physicalDevices to find a suitable one
+    this->vk_physical_device = physicalDevices[0];
+
 	return true;
 }
