@@ -69,21 +69,30 @@ private:
 // Overload these functions depending on the render engine	
 // ---
 
+
+	
+
+	// = Initialization / De-Initialization =
+	// ---
+
+	bool initialize_vulkan();
+
 	bool vk_create_instance();
 	/// returns false on failure
+
+	bool vk_pick_physical_device();
+
+	bool vk_create_device();
+
+	bool vk_cleanup();
+
+	// = Validation = 
+	// ---
 
 	bool vk_check_validation_layer_support();
 	/// checks that all of the validation layers are supported
 
-	bool vk_cleanup();
 
-	void initialize_vulkan();
-
-	bool vk_create_device();
-
-	// = Base Functions =
-	// ---
-	bool vk_pick_physical_device();
 	void vk_bind_to_window(SDL_Window*);
 
 //////////////////////

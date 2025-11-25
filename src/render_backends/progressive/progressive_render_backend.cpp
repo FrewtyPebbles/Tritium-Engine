@@ -30,7 +30,9 @@ void ProgressiveRenderBackend::before_start_window(string window_title, int wind
 
 void ProgressiveRenderBackend::before_game_loop() {
 	// This is where vulkan is initialized.
-	this->initialize_vulkan();
+	if (!this->initialize_vulkan()) {
+		throw std::runtime_error("Failed to initialize vulkan.");
+	}
 }
 
 void ProgressiveRenderBackend::after_game_loop() {
@@ -44,9 +46,13 @@ void ProgressiveRenderBackend::update_game() {
 	// This is where the screen is updated with the vulkan surface.
 }
 
-void ProgressiveRenderBackend::initialize_vulkan() {
+bool ProgressiveRenderBackend::initialize_vulkan() {
 	if (!this->vk_create_instance()) {
 		throw std::runtime_error("Failed to create vulkan instance.");
+	}
+
+	if (!this->vk_pick_physical_device()) {
+		throw std::runtime_error("Failed to pick physical device.");
 	}
 }
 
@@ -106,6 +112,25 @@ bool ProgressiveRenderBackend::vk_create_instance() {
 		return false;
 	}
 
+	return true;
+}
+
+bool ProgressiveRenderBackend::vk_pick_physical_device() {
+	//find a physical device for vulkan;
+
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(this->vk_instance, &deviceCount, nullptr);
+
+	if (deviceCount == 0) {
+		throw std::runtime_error("No GPUS with vulkan support.");
+		return false;
+	}
+
+	std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
+	vkEnumeratePhysicalDevices(this->vk_instance, &deviceCount, physicalDevices.data());
+
+	this->vk_physical_device = physicalDevices[0];
+	
 	return true;
 }
 
