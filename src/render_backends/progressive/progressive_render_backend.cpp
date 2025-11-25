@@ -107,10 +107,13 @@ bool ProgressiveRenderBackend::vk_create_instance() {
 	uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(this->vk_instance, &deviceCount, nullptr);
 
+	if(deviceCount == 0) {
+		throw std::runtime_error("No GPUS with vulkan support.");
+	}
+
     std::vector<VkPhysicalDevice> physicalDevices(deviceCount);
     vkEnumeratePhysicalDevices(this->vk_instance, &deviceCount, physicalDevices.data());
 
-    // Iterate through physicalDevices to find a suitable one
     this->vk_physical_device = physicalDevices[0];
 
 	return true;
