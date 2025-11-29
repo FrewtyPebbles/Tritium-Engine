@@ -84,6 +84,9 @@ private:
 
 	bool vk_pick_physical_device();
 
+	//this also creates the queue
+	bool vk_create_virtual_device();
+
 	bool vk_create_device();
 
 	bool vk_cleanup();
@@ -121,6 +124,7 @@ private:
 	vk::SurfaceKHR kv_surface;
 	vk::PhysicalDevice vk_physical_device;
 	vk::Device vk_device;
+	vk::Queue vk_queue;
 	vk::DebugUtilsMessengerEXT vk_debug_messenger;
 
 };

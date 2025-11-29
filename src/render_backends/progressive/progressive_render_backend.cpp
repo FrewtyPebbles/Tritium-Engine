@@ -59,6 +59,10 @@ bool ProgressiveRenderBackend::initialize_vulkan() {
 	if (!this->vk_pick_physical_device()) {
 		throw std::runtime_error("Failed to pick physical device.");
 	}
+
+	if (!this->vk_create_virtual_device()) {
+		throw std::runtime_error("Failed to pick physical device.");
+	}
 }
 
 bool ProgressiveRenderBackend::vk_cleanup() {
@@ -168,6 +172,51 @@ bool ProgressiveRenderBackend::vk_pick_physical_device() {
 
 	this->vk_physical_device = physicalDevices[0];
 	
+	return true;
+}
+
+bool ProgressiveRenderBackend::vk_create_virtual_device() {
+	//find all queue families from physical device
+	uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
+	auto queueFamilies = vk_physical_device.getQueueFamilyProperties();
+
+	for (uint32_t i = 0; i < queueFamilies.size(); ++i) {
+		if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+			graphicsQueueFamilyIndex = i;
+			break;
+		}
+	}
+	if (graphicsQueueFamilyIndex == UINT32_MAX) {
+		throw std::runtime_error("Failed to find graphics queue family!");
+	}
+	
+	//create queue
+	float queuePriority = 1.0f;
+	vk::DeviceQueueCreateInfo queueCreateInfo(
+		{},
+		graphicsQueueFamilyIndex,
+		1,
+		&queuePriority
+	);
+
+	// optional features
+	vk::PhysicalDeviceFeatures enabledFeatures{};
+	enabledFeatures.samplerAnisotropy = VK_TRUE;
+
+	
+	//create device
+	vk::DeviceCreateInfo deviceCreateInfo(
+		{},
+		1,
+		&queueCreateInfo,
+		0, nullptr,  // Deprecated validation layers
+		0, nullptr,  // Device extensions (add swapchain later)
+		&enabledFeatures
+	);
+
+	this->vk_device = this->vk_physical_device.createDevice(deviceCreateInfo);
+	this->vk_queue = this->vk_device.getQueue(graphicsQueueFamilyIndex, 0);
+
 	return true;
 }
 
