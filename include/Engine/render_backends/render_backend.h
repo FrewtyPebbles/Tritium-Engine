@@ -7,6 +7,7 @@
 #include <SDL2/SDL.h>
 #include <string>
 #include <vector>
+#include "Engine/logging/logger.h"
 
 using std::string;
 using std::vector;
@@ -34,14 +35,16 @@ public:
 		int application_version_major,
 		int application_version_minor,
 		int application_version_patch,
-		string application_version_identifier
+		string application_version_identifier,
+		Logger* logger
 	) : application_name(application_name),
 		application_description(application_description),
 		application_authors(application_authors),
 		application_version_major(application_version_major),
 		application_version_minor(application_version_minor),
 		application_version_patch(application_version_patch),
-		application_version_identifier(application_version_identifier)
+		application_version_identifier(application_version_identifier),
+		logger(logger)
 	{};
 	/// default settings?
 
@@ -153,6 +156,10 @@ protected:
 	int application_version_minor;
 	int application_version_patch;
 	string application_version_identifier;
+
+// === Logging ===
+
+	Logger* logger;
 
 private:
 

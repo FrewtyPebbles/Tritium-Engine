@@ -3,6 +3,7 @@
 #include "Engine/render_backends/shared/vulkan/extensions.h"
 #include <SDL2/SDL_vulkan.h>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 // ==== Class Functions ====
@@ -11,12 +12,13 @@ ProgressiveRenderBackend::ProgressiveRenderBackend(
 	string application_name, string application_description,
 	vector<string> application_authors, int application_version_major,
 	int application_version_minor, int application_version_patch,
-	string application_version_identifier, Uint32 sdl_only_window_flags
+	string application_version_identifier, Logger* logger, Uint32 sdl_only_window_flags
 )
 	: RenderBackend(
 		application_name, application_description, application_authors,
 		application_version_major, application_version_minor,
-		application_version_patch, application_version_identifier
+		application_version_patch, application_version_identifier,
+		logger
 	)
 {
 	// sdl_window_flags must be set in every constructor to include `SDL_WINDOW_VULKAN`
@@ -259,7 +261,8 @@ vk::DebugUtilsMessengerCreateInfoEXT ProgressiveRenderBackend::vk_create_debug_m
 		vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
 		vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
 		vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
-		this->vk_handle_debug_messages//, logger_instance
+		this->vk_handle_debug_messages,
+		this->logger
 	);
 }
 
@@ -281,9 +284,35 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL ProgressiveRenderBackend::vk_handle_debug_messa
 	vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
 	vk::DebugUtilsMessageTypeFlagsEXT message_type,
 	const vk::DebugUtilsMessengerCallbackDataEXT* p_callback_data,
-	void* logger
+	void* logger_void_pointer
 ) {
-	std::cerr << "validation layer: " << p_callback_data->pMessage << std::endl;
-	
-	return vk::False;
+	std::stringstream validationLayerMessage;
+	validationLayerMessage << "validation layer: " << p_callback_data->pMessage;
+
+	if (logger_void_pointer != nullptr) {
+		Logger* logger = static_cast<Logger*>(logger_void_pointer);
+
+		Log::Severity logSeverity;
+
+		switch (message_severity) {
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo:
+			logSeverity = Log::Severity::INFO;
+			break;
+
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning:
+			logSeverity = Log::Severity::WARNING;
+			break;
+
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eError:
+			logSeverity = Log::Severity::ERROR;
+			break;
+
+		case vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose:
+			logSeverity = Log::Severity::VERBOSE;
+			break;
+		}
+
+		logger->log(validationLayerMessage.str(), "rendering", Log::Domain::RENDERING, logSeverity);
+		return vk::False;
+	}
 }

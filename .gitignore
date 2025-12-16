@@ -49,3 +49,8 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
+**/runtime
+**/editor
+!/runtime/
+!/editor/
+.logs/

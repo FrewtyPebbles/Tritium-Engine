@@ -7,6 +7,7 @@
 #include "Engine/render_backends/progressive/progressive_render_backend.h"
 #include "Engine/constants.h"
 #include <stdexcept>
+#include "Engine/logging/logger.h"
 
 using std::cout, std::endl;
 
@@ -18,6 +19,19 @@ int main(int argc, char** argv)
 	// For now just create a test window.
 	// Game-data loading logic will choose the render backend and load in the initial scene and node state.
 	try {
+		// Log pipes must be added to vector this way to avoid copying
+		// since the file pointer in log pipes cant be copied
+		vector<LogPipe*> logPipes;
+		logPipes.reserve(2);
+
+		LogPipe logPipeRendering("./.logs/rendering.log", "rendering");
+		LogPipe logPipeUser("./.logs/user.log", "user");
+
+		logPipes.push_back(&logPipeRendering);
+		logPipes.push_back(&logPipeUser);
+
+		Logger logger = Logger(logPipes);
+
 		ProgressiveRenderBackend backend = ProgressiveRenderBackend(
 			"TestApp",
 			"This is a test app.",
@@ -25,7 +39,8 @@ int main(int argc, char** argv)
 			0,
 			0,
 			0,
-			"dev"
+			"dev",
+			&logger
 		);
 
 		backend.start_window("Test Window", 600, 600);

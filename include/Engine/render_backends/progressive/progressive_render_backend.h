@@ -41,6 +41,7 @@ public:
 		int application_version_minor,
 		int application_version_patch,
 		string application_version_identifier,
+		Logger* logger,
 		Uint32 sdl_only_window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN
 	);
 	/// sdl_window_flags must be set in every constructor to include `SDL_WINDOW_VULKAN`
@@ -107,7 +108,7 @@ private:
 		vk::DebugUtilsMessageSeverityFlagBitsEXT message_severity,
 		vk::DebugUtilsMessageTypeFlagsEXT message_type,
 		const vk::DebugUtilsMessengerCallbackDataEXT* p_callback_data,
-		void* logger // The logger instance is passed here.
+		void* logger_void_pointer // The logger instance is passed here.
 	);
 	/// This is a vulkan callback function for handling validation layer / debug messages
 

@@ -3,33 +3,48 @@
 // `LogPipe`s.
 
 #include "Engine/logging/log_pipe.h"
-#include <unordered_map>
+#include <map>
 #include <string>
+#include <vector>
+#include <thread>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
-using std::unordered_map;
+using std::map;
 using std::string;
+using std::vector;
+using std::thread;
+using std::queue;
 
-namespace Log {
-	enum Domain {
-		PHYSICS = 0,
-		USER = 1,
-		RENDERING = 2
-	};
-
-	enum Severity {
-		INFO = 0,
-		WARNING = 1,
-		ERROR = 2,
-		FATAL = 3
-	};
-}
+struct LogMessage {
+	string message;
+	string pipe_name;
+	Log::Domain domain;
+	Log::Severity severity;
+	std::tm time;
+};
 
 class Logger {
 public:
-	Logger();
-	/// Default pipes
+	Logger(vector<LogPipe*> pipes);
+	~Logger();
+	
 
-	log(string message, string pipe_name, Log::Domain domain, Log::Severity)
+	void log(string message, string pipe_name, Log::Domain domain, Log::Severity severity);
 private:
-	unordered_map<string, LogPipe> pipe_map;
+	static void thread_main(Logger* self);
+
+	void serial_log(const LogMessage & log);
+
+	void throw_error(string msg);
+
+	queue<LogMessage> log_queue;
+	map<string, LogPipe*> pipe_map;
+	thread logging_thread;
+	bool thread_running = false;
+	std::condition_variable cv;
+	std::mutex mtx;
+	bool errored = false;
+	string error_msg;
 };
