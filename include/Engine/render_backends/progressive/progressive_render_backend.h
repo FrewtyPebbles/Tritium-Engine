@@ -1,21 +1,13 @@
 #pragma once
 
 #include "Engine/render_backends/render_backend.h"
+#include "Engine/render_backends/progressive/virtual_device.h"
+#include "Engine/render_backends/progressive/constants.h"
 #include <vulkan/vulkan.hpp>
 #include <map>
+#include <memory>
 
 using std::map;
-
-const vector<const char*> vkVALIDATION_LAYERS = {
-	"VK_LAYER_KHRONOS_validation"
-};
-
-
-#ifdef NDEBUG
-	const bool vkENABLE_VALIDATION_LAYERS = false;
-#else
-	const bool vkENABLE_VALIDATION_LAYERS = true;
-#endif
 
 
 // --- ProgressiveRenderBackend --- 
@@ -81,26 +73,14 @@ private:
 
 	bool initialize_vulkan();
 
-	bool vk_create_instance();
 	/// returns false on failure
+	bool vk_create_instance();
 
 	vector<const char*> vk_get_required_extensions();
 
-	bool vk_pick_physical_device();
-
-	//Checks if physical device has our required vulkan extensions:
-	bool vk_check_physical_device_is_suitable(vk::PhysicalDevice device);
-
-	uint64_t vk_measure_physical_device_suitability(vk::PhysicalDevice physicalDevice);
-
-	vk::PhysicalDevice & vk_get_physical_device();
-
-	//this also creates the queue
-	bool vk_create_virtual_device();
-
 	bool vk_cleanup();
 
-
+	bool vk_create_virtual_devices();
 
 
 	// = Validation = 
@@ -133,14 +113,15 @@ private:
 	vk::Instance vk_instance;
 	vk::SurfaceKHR kv_surface;
 	// add support for multiple different physical devices.
-	// that way later we can support rendering across multiple devices at once or switching devices.
+	// that way later we can support switching devices.
 	// the keys of this map are the physical device ids
 	map<uint32_t, vk::PhysicalDevice> vk_physical_device_map;
-	// key: priority value, value: physical device id
-	std::multimap<uint64_t, uint32_t> vk_physical_device_priority_map;
 
-	size_t vk_physical_device_id;
-	vk::Device vk_device;
+	vector<std::shared_ptr<VirtualDevice>> virtual_devices;
+	std::multimap<uint64_t, std::shared_ptr<VirtualDevice>> virtual_device_priority_map;
+
+	std::shared_ptr<VirtualDevice> virtual_device;
+
 	vk::Queue vk_queue;
 	vk::DebugUtilsMessengerEXT vk_debug_messenger;
 

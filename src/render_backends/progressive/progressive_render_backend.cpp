@@ -58,12 +58,8 @@ bool ProgressiveRenderBackend::initialize_vulkan() {
 		throw std::runtime_error("Failed to set up debug messenger.");
 	}
 
-	if (!this->vk_pick_physical_device()) {
-		throw std::runtime_error("Failed to pick physical device.");
-	}
-
-	if (!this->vk_create_virtual_device()) {
-		throw std::runtime_error("Failed to pick physical device.");
+	if (!this->vk_create_virtual_devices()) {
+		throw std::runtime_error("Failed to create virtual devices.");
 	}
 }
 
@@ -71,7 +67,9 @@ bool ProgressiveRenderBackend::vk_cleanup() {
 	if (vkENABLE_VALIDATION_LAYERS) {
 		VK_Extension::destroy_debug_utils_messenger_ext(this->vk_instance, this->vk_debug_messenger, nullptr);
 	}
-	this->vk_device.destroy();
+	for (const auto& virtualDevice : this->virtual_devices) {
+		virtualDevice->clean_up();
+	}
 	this->vk_instance.destroy();
 	return true;
 }
@@ -159,10 +157,8 @@ vector<const char*> ProgressiveRenderBackend::vk_get_required_extensions() {
 	return extensions;
 }
 
-bool ProgressiveRenderBackend::vk_pick_physical_device() {
-	//find a physical device for vulkan;
-
-	std::vector<vk::PhysicalDevice> physicalDevices = 
+bool ProgressiveRenderBackend::vk_create_virtual_devices() {
+	std::vector<vk::PhysicalDevice> physicalDevices =
 		this->vk_instance.enumeratePhysicalDevices();
 
 	if (physicalDevices.size() == 0) {
@@ -173,7 +169,7 @@ bool ProgressiveRenderBackend::vk_pick_physical_device() {
 	// Create a map of all suitable devices:
 
 	for (const auto& physicalDevice : physicalDevices) {
-		if (this->vk_check_physical_device_is_suitable(physicalDevice)) {
+		if (VirtualDevice::check_physical_device_is_suitable(physicalDevice)) {
 			auto properties = physicalDevice.getProperties();
 			this->vk_physical_device_map.insert(std::make_pair(properties.deviceID, physicalDevice));
 		}
@@ -184,110 +180,13 @@ bool ProgressiveRenderBackend::vk_pick_physical_device() {
 		return false;
 	}
 
-	// Now pick the best one
-
-	// Create priority map of best to worst candidates
-
 	for (auto const& [physicalDeviceID, physicalDevice] : this->vk_physical_device_map) {
-		auto physicalDeviceScore = vk_measure_physical_device_suitability(physicalDevice);
-		this->vk_physical_device_priority_map.insert(std::make_pair(physicalDeviceScore, physicalDeviceID));
+		auto virtualDevice = std::make_shared<VirtualDevice>(physicalDevice);
+		this->virtual_devices.push_back(virtualDevice);
+		this->virtual_device_priority_map.insert(std::make_pair(virtualDevice->get_suitability(), virtualDevice));
 	}
 
-	// Select the best scoring device and get its id
-	this->vk_physical_device_id = this->vk_physical_device_priority_map.rbegin()->second;
-	
-	return true;
-}
-
-bool ProgressiveRenderBackend::vk_check_physical_device_is_suitable(vk::PhysicalDevice physicalDevice) {
-	vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
-	vk::PhysicalDeviceFeatures physicalDeviceFeatures = physicalDevice.getFeatures();
-
-	// This is where we describe the hardware requirements, later we may set these dynamically
-	// based on what features of the engine the game is using such as if the game is using geometry shaders or not.
-	return (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu ||
-			physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu ||
-			physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eCpu ||
-			physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eVirtualGpu);
-}
-
-uint64_t ProgressiveRenderBackend::vk_measure_physical_device_suitability(vk::PhysicalDevice physicalDevice) {
-	uint64_t score = 0;
-	vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
-	vk::PhysicalDeviceFeatures physicalDeviceFeatures = physicalDevice.getFeatures();
-
-	if (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
-		score += 1000;
-	}
-
-	if (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu) {
-		score += 500;
-	}
-
-	score += physicalDeviceProperties.limits.maxImageDimension1D;
-	score += physicalDeviceProperties.limits.maxImageDimension2D;
-	score += physicalDeviceProperties.limits.maxImageDimension3D;
-	score += physicalDeviceProperties.limits.maxImageDimensionCube;
-	score += physicalDeviceProperties.limits.maxComputeSharedMemorySize;
-	for (auto s : physicalDeviceProperties.limits.maxComputeWorkGroupCount)
-		score += s;
-	for (auto s : physicalDeviceProperties.limits.maxComputeWorkGroupSize)
-		score += s;
-	score += physicalDeviceProperties.limits.maxComputeWorkGroupInvocations;
-	score += physicalDeviceProperties.limits.maxFramebufferLayers;
-	score += physicalDeviceProperties.limits.maxMemoryAllocationCount;
-
-
-	return score;
-}
-
-vk::PhysicalDevice & ProgressiveRenderBackend::vk_get_physical_device() {
-	return this->vk_physical_device_map.at(this->vk_physical_device_id);
-}
-
-bool ProgressiveRenderBackend::vk_create_virtual_device() {
-	//find all queue families from physical device
-	uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
-	auto queueFamilies = this->vk_get_physical_device().getQueueFamilyProperties();
-
-	for (uint32_t i = 0; i < queueFamilies.size(); ++i) {
-		if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
-			graphicsQueueFamilyIndex = i;
-			break;
-		}
-	}
-	if (graphicsQueueFamilyIndex == UINT32_MAX) {
-		throw std::runtime_error("Failed to find graphics queue family!");
-	}
-	
-	//create queue
-	float queuePriority = 1.0f;
-	vk::DeviceQueueCreateInfo queueCreateInfo(
-		{},
-		graphicsQueueFamilyIndex,
-		1,
-		&queuePriority
-	);
-
-	// optional features
-	vk::PhysicalDeviceFeatures enabledFeatures{};
-	enabledFeatures.samplerAnisotropy = VK_TRUE;
-
-	
-	//create device
-	vk::DeviceCreateInfo deviceCreateInfo(
-		{},
-		1,
-		&queueCreateInfo,
-		0, nullptr,  // Deprecated validation layers
-		0, nullptr,  // Device extensions (add swapchain later)
-		&enabledFeatures
-	);
-
-	this->vk_device = this->vk_get_physical_device().createDevice(deviceCreateInfo);
-	this->vk_queue = this->vk_device.getQueue(graphicsQueueFamilyIndex, 0);
-
-	return true;
+	this->virtual_device = this->virtual_device_priority_map.rbegin()->second;
 }
 
 
