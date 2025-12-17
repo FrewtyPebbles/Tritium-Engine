@@ -74,7 +74,9 @@ void VirtualDevice::vk_create_logical_device() {
 
 	vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo(
 		{},
-		queueCreateInfos
+		queueCreateInfos,
+		{},
+		vkDEVICE_EXTENSIONS
 	);
 
 	createInfo.pEnabledFeatures = &deviceFeatures;
@@ -101,6 +103,18 @@ void VirtualDevice::vk_create_logical_device() {
 	this->vk_device.getQueue(this->queue_family_indices.graphics.value(), 0, &this->queues.graphics);
 	this->vk_device.getQueue(this->queue_family_indices.present.value(), 0, &this->queues.present);
 	
+}
+
+bool VirtualDevice::check_device_extension_support(vk::PhysicalDevice vk_physical_device) {
+	vector<vk::ExtensionProperties> availableExtensions =
+		vk_physical_device.enumerateDeviceExtensionProperties();
+	std::set<std::string> requiredExtensions(vkDEVICE_EXTENSIONS.begin(), vkDEVICE_EXTENSIONS.end());
+
+	for (const auto& extension : availableExtensions) {
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
 }
 
 
@@ -138,10 +152,12 @@ uint64_t VirtualDevice::vk_measure_physical_device_suitability() {
 	return score;
 }
 
-bool VirtualDevice::check_physical_device_is_suitable(vk::PhysicalDevice physical_device, const vk::SurfaceKHR& vk_surface) {
-	QueueFamilyIndices queue_family_indices = QueueFamilyIndices(physical_device, vk_surface);
-	vk::PhysicalDeviceProperties physicalDeviceProperties = physical_device.getProperties();
-	vk::PhysicalDeviceFeatures physicalDeviceFeatures = physical_device.getFeatures();
+bool VirtualDevice::check_physical_device_is_suitable(vk::PhysicalDevice vk_physical_device, const vk::SurfaceKHR& vk_surface) {
+	QueueFamilyIndices queue_family_indices = QueueFamilyIndices(vk_physical_device, vk_surface);
+	vk::PhysicalDeviceProperties physicalDeviceProperties = vk_physical_device.getProperties();
+	vk::PhysicalDeviceFeatures physicalDeviceFeatures = vk_physical_device.getFeatures();
+
+	bool extensionsSupported = VirtualDevice::check_device_extension_support(vk_physical_device);
 
 	// This is where we describe the hardware requirements, later we may set these dynamically
 	// based on what features of the engine the game is using such as if the game is using geometry shaders or not.
@@ -149,7 +165,7 @@ bool VirtualDevice::check_physical_device_is_suitable(vk::PhysicalDevice physica
 		physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu ||
 		physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eCpu ||
 		physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eVirtualGpu)
-		&& (queue_family_indices.has_required());
+		&& (queue_family_indices.has_required()) && extensionsSupported;
 }
 
 uint64_t VirtualDevice::get_suitability() const {

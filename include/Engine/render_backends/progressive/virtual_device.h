@@ -29,15 +29,19 @@ public:
 	vk::Device get_vulkan_device();
 	uint64_t get_suitability() const;
 	
-	static bool check_physical_device_is_suitable(vk::PhysicalDevice physical_device, const vk::SurfaceKHR& vk_surface);
+	static bool check_physical_device_is_suitable(vk::PhysicalDevice vk_physical_device, const vk::SurfaceKHR& vk_surface);
 
 	QueueFamilyIndices queue_family_indices;
 	DeviceQueues queues;
 
 private:
 
+	static bool check_device_extension_support(vk::PhysicalDevice vk_physical_device);
+
 	uint64_t vk_measure_physical_device_suitability();
 	void vk_create_logical_device();
+
+	
 
 
 	vk::Device vk_device;
