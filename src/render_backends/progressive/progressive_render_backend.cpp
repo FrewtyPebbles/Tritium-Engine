@@ -58,6 +58,10 @@ bool ProgressiveRenderBackend::initialize_vulkan() {
 		throw std::runtime_error("Failed to set up debug messenger.");
 	}
 
+	if (!this->vk_create_surface()) {
+		throw std::runtime_error("Failed to create window surface.");
+	}
+
 	if (!this->vk_create_virtual_devices()) {
 		throw std::runtime_error("Failed to create virtual devices.");
 	}
@@ -70,6 +74,7 @@ bool ProgressiveRenderBackend::vk_cleanup() {
 	for (const auto& virtualDevice : this->virtual_devices) {
 		virtualDevice->clean_up();
 	}
+	this->vk_instance.destroySurfaceKHR(this->vk_surface);
 	this->vk_instance.destroy();
 	return true;
 }
@@ -134,6 +139,14 @@ bool ProgressiveRenderBackend::vk_create_instance() {
 	return true;
 }
 
+bool ProgressiveRenderBackend::vk_create_surface() {
+	if (!SDL_Vulkan_CreateSurface(this->sdl_window, static_cast<VkInstance>(this->vk_instance), reinterpret_cast<VkSurfaceKHR*>(&vk_surface))) {
+		std::runtime_error("Failed to create window surface.");
+		return false;
+	}
+	return true;
+}
+
 vector<const char*> ProgressiveRenderBackend::vk_get_required_extensions() {
 	// Get sdl extensions
 	uint32_t sdl_ExtensionCount = 0;
@@ -169,7 +182,7 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 	// Create a map of all suitable devices:
 
 	for (const auto& physicalDevice : physicalDevices) {
-		if (VirtualDevice::check_physical_device_is_suitable(physicalDevice)) {
+		if (VirtualDevice::check_physical_device_is_suitable(physicalDevice, this->vk_surface)) {
 			auto properties = physicalDevice.getProperties();
 			this->vk_physical_device_map.insert(std::make_pair(properties.deviceID, physicalDevice));
 		}
@@ -181,7 +194,7 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 	}
 
 	for (auto const& [physicalDeviceID, physicalDevice] : this->vk_physical_device_map) {
-		auto virtualDevice = std::make_shared<VirtualDevice>(physicalDevice);
+		auto virtualDevice = std::make_shared<VirtualDevice>(physicalDevice, &this->vk_surface);
 		this->virtual_devices.push_back(virtualDevice);
 		this->virtual_device_priority_map.insert(std::make_pair(virtualDevice->get_suitability(), virtualDevice));
 	}

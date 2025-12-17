@@ -82,6 +82,8 @@ private:
 
 	bool vk_create_virtual_devices();
 
+	bool vk_create_surface();
+
 
 	// = Validation = 
 	// ---
@@ -111,7 +113,7 @@ private:
 
 	// required vulkan attributes
 	vk::Instance vk_instance;
-	vk::SurfaceKHR kv_surface;
+	vk::SurfaceKHR vk_surface;
 	// add support for multiple different physical devices.
 	// that way later we can support switching devices.
 	// the keys of this map are the physical device ids

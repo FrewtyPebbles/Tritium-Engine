@@ -1,39 +1,47 @@
 #include "Engine/render_backends/progressive/virtual_device.h"
 #include <vector>
 #include <stdexcept>
+#include <set>
 
 using std::vector;
 
-QueueFamilyIndices::QueueFamilyIndices(const vk::PhysicalDevice& vk_physical_device) {
+QueueFamilyIndices::QueueFamilyIndices(const vk::PhysicalDevice& vk_physical_device, const vk::SurfaceKHR& vk_surface) {
 	vector<vk::QueueFamilyProperties> queueFamiliesProperties = vk_physical_device.getQueueFamilyProperties();
 	// populate struct with the supported queue family indexes
 	int i = 0;
 	for (const auto& queueFamilyProperties : queueFamiliesProperties) {
 		if (queueFamilyProperties.queueFlags & vk::QueueFlags::BitsType::eGraphics) {
-			this->graphics_family = i;
+			this->graphics = i;
 		}
+
+		if (vk_physical_device.getSurfaceSupportKHR(i, vk_surface)) {
+			this->present = i;
+		}
+
 
 		if (this->is_complete())
 			break;
 
 		i++;
 	}
+
+
 }
 
 bool QueueFamilyIndices::has_required() const {
-	return graphics_family.has_value();
+	return graphics.has_value() && present.has_value();
 }
 
 bool QueueFamilyIndices::is_complete() const {
-	return graphics_family.has_value();
+	return graphics.has_value() && present.has_value();
 }
 
 
-VirtualDevice::VirtualDevice(vk::PhysicalDevice vk_physical_device) : vk_physical_device(vk_physical_device), suitability(0) {
+VirtualDevice::VirtualDevice(vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface) : vk_physical_device(vk_physical_device), suitability(0), vk_surface(vk_surface) {
 	suitability = this->vk_measure_physical_device_suitability();
 
 	// This populates the queue family indices
-	this->queue_family_indices = QueueFamilyIndices(this->vk_physical_device);
+	this->queue_family_indices = QueueFamilyIndices(this->vk_physical_device, *vk_surface);
 
 	// create the vk::Device
 	this->vk_create_logical_device();
@@ -44,20 +52,29 @@ void VirtualDevice::clean_up() {
 }
 
 void VirtualDevice::vk_create_logical_device() {
-	float queuePriority = 1.0f;
-	vk::DeviceQueueCreateInfo queueCreateInfo = vk::DeviceQueueCreateInfo(
-		{},
-		this->queue_family_indices.graphics_family.value(),
-		1,
-		&queuePriority
-	);
 
+	vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+
+	std::set<uint32_t> uniqueQueueFamilies = {
+		this->queue_family_indices.graphics.value(),
+		this->queue_family_indices.present.value()
+	};
+
+	float queuePriority = 1.0f;
+	for (uint32_t queueFamily : uniqueQueueFamilies) {
+		vk::DeviceQueueCreateInfo queueCreateInfo = vk::DeviceQueueCreateInfo(
+			{},
+			queueFamily,
+			1,
+			&queuePriority
+		);
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
 	vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures();
 
 	vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo(
 		{},
-		1,
-		&queueCreateInfo
+		queueCreateInfos
 	);
 
 	createInfo.pEnabledFeatures = &deviceFeatures;
@@ -81,7 +98,9 @@ void VirtualDevice::vk_create_logical_device() {
 
 	// Now get the queue handles
 
-	this->vk_device.getQueue(this->queue_family_indices.graphics_family.value(), 0, &this->queues.graphics);
+	this->vk_device.getQueue(this->queue_family_indices.graphics.value(), 0, &this->queues.graphics);
+	this->vk_device.getQueue(this->queue_family_indices.present.value(), 0, &this->queues.present);
+	
 }
 
 
@@ -119,8 +138,8 @@ uint64_t VirtualDevice::vk_measure_physical_device_suitability() {
 	return score;
 }
 
-bool VirtualDevice::check_physical_device_is_suitable(vk::PhysicalDevice physical_device) {
-	QueueFamilyIndices queue_family_indices = QueueFamilyIndices(physical_device);
+bool VirtualDevice::check_physical_device_is_suitable(vk::PhysicalDevice physical_device, const vk::SurfaceKHR& vk_surface) {
+	QueueFamilyIndices queue_family_indices = QueueFamilyIndices(physical_device, vk_surface);
 	vk::PhysicalDeviceProperties physicalDeviceProperties = physical_device.getProperties();
 	vk::PhysicalDeviceFeatures physicalDeviceFeatures = physical_device.getFeatures();
 
