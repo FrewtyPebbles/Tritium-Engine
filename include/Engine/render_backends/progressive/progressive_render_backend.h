@@ -84,6 +84,8 @@ private:
 
 	bool vk_create_surface();
 
+	bool vk_create_swapchain();
+
 
 	// = Validation = 
 	// ---

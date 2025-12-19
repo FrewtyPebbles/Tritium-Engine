@@ -48,6 +48,10 @@ VirtualDevice::VirtualDevice(vk::PhysicalDevice vk_physical_device, vk::SurfaceK
 
 	// create the swap chain
 	this->swap_chain = std::make_unique<SwapChain>(&this->vk_physical_device, this->vk_surface);
+
+	// find all surface formats
+	this->swap_chain->GetSurfaceFormats();
+
 }
 
 void VirtualDevice::clean_up() {

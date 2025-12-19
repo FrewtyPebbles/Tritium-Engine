@@ -15,9 +15,15 @@ class SwapChain {
 public:
 	SwapChain(vk::PhysicalDevice* vk_physical_device, vk::SurfaceKHR* vk_surface);
 
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {return support_details;}
+	bool GetSurfaceFormats();
+
 private:
 	vk::PhysicalDevice* vk_physical_device;
+
+	std::vector<VksurfaceFormatKHR> formats;
 	vk::SurfaceKHR* vk_surface;
+
 
 	SwapChainSupportDetails support_details;
 };

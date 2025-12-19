@@ -202,6 +202,11 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 	this->virtual_device = this->virtual_device_priority_map.rbegin()->second;
 }
 
+SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
+    SwapChainSupportDetails details;
+
+    return details;
+}
 
 bool ProgressiveRenderBackend::vk_check_validation_layer_support() {
 	uint32_t layerCount;

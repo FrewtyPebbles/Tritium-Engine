@@ -10,3 +10,23 @@ SwapChainSupportDetails::SwapChainSupportDetails(const vk::PhysicalDevice& vk_ph
 	vk_surface_formats = vk_physical_device.getSurfaceFormatsKHR(vk_surface);
 	vk_present_modes = vk_physical_device.getSurfacePresentModesKHR(vk_surface);
 }
+
+bool GetSurfaceFormats()
+{
+	uint32_t formatCount = 0;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+	if (formatCount != 0) {
+		formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(
+			device,
+			surface,
+			&formatCount,
+			formats.data()
+		);
+	} else {
+		return false;
+	}
+
+	return true;
+}
