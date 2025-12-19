@@ -11,7 +11,7 @@ SwapChainSupportDetails::SwapChainSupportDetails(const vk::PhysicalDevice& vk_ph
 	vk_present_modes = vk_physical_device.getSurfacePresentModesKHR(vk_surface);
 }
 
-bool GetSurfaceFormats()
+bool SwapChain::GetSurfaceFormats()
 {
 	uint32_t formatCount = 0;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
