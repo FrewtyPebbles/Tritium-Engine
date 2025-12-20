@@ -14,14 +14,20 @@ struct SwapChainSupportDetails {
 class SwapChain {
 public:
 	SwapChain(vk::PhysicalDevice* vk_physical_device, vk::SurfaceKHR* vk_surface);
-	bool GetSurfaceFormats();
 
 private:
-	vk::PhysicalDevice* vk_physical_device;
 
-	std::vector<vk::SurfaceFormatKHR> formats;
+	// FUNCTIONS
+
+	void choose_surface_format();
+
+	// ATTRIBUTES
+
+	vk::PhysicalDevice* vk_physical_device;
 	vk::SurfaceKHR* vk_surface;
 
+	vk::SurfaceFormatKHR vk_surface_format;
+	vk::SurfaceFormatKHR vk_surface_format;
 
 	SwapChainSupportDetails support_details;
 };
