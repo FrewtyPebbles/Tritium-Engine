@@ -32,18 +32,26 @@ int main(int argc, char** argv)
 
 		Logger logger = Logger(logPipes);
 
-		ProgressiveRenderBackend backend = ProgressiveRenderBackend(
+		// Create userconfig
+
+		ApplicationConfig applicationConfig = ApplicationConfig(
 			"TestApp",
 			"This is a test app.",
 			{ "Jane Doe" },
 			0,
 			0,
 			0,
-			"dev",
+			"dev"
+		);
+
+		// Create/start backend
+
+		ProgressiveRenderBackend backend = ProgressiveRenderBackend(
+			&applicationConfig,
 			&logger
 		);
 
-		backend.start_window("Test Window", 600, 600);
+		backend.start_window(applicationConfig.application_name, 600, 600);
 	}
 	catch (std::runtime_error error) {
 		std::cerr << "Fatal Error: " << error.what() << "\n";

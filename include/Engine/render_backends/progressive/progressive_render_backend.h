@@ -29,13 +29,7 @@ public:
 // ---
 
 	ProgressiveRenderBackend(
-		string application_name,
-		string application_description,
-		vector<string> application_authors,
-		int application_version_major,
-		int application_version_minor,
-		int application_version_patch,
-		string application_version_identifier,
+		ApplicationConfig* application_config,
 		Logger* logger,
 		Uint32 sdl_only_window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN
 	);

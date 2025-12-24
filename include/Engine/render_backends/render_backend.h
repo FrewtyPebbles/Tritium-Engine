@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include "Engine/logging/logger.h"
+#include "Engine/state/application_config.h"
 
 using std::string;
 using std::vector;
@@ -29,21 +30,10 @@ public:
 // ---
 
 	RenderBackend(
-		string application_name,
-		string application_description,
-		vector<string> application_authors,
-		int application_version_major,
-		int application_version_minor,
-		int application_version_patch,
-		string application_version_identifier,
+		ApplicationConfig* application_config,
 		Logger* logger
-	) : application_name(application_name),
-		application_description(application_description),
-		application_authors(application_authors),
-		application_version_major(application_version_major),
-		application_version_minor(application_version_minor),
-		application_version_patch(application_version_patch),
-		application_version_identifier(application_version_identifier),
+	) : 
+		application_config(application_config),
 		logger(logger)
 	{};
 	/// default settings?
@@ -147,15 +137,9 @@ protected:
 
 	bool window_running = false;
 
-// === Metadata ===
-	
-	string application_name;
-	string application_description;
-	vector<string> application_authors;
-	int application_version_major;
-	int application_version_minor;
-	int application_version_patch;
-	string application_version_identifier;
+// === Engine Data ===
+
+	ApplicationConfig* application_config;
 
 // === Logging ===
 

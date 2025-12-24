@@ -37,9 +37,9 @@ bool QueueFamilyIndices::is_complete() const {
 }
 
 
-VirtualDevice::VirtualDevice(SDL_Window* sdl_window, vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface,
+VirtualDevice::VirtualDevice(ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface,
 	vk::PresentModeKHR prefered_present_mode)
-: sdl_window(sdl_window), vk_physical_device(vk_physical_device), suitability(0), vk_surface(vk_surface) {
+: sdl_window(sdl_window), vk_physical_device(vk_physical_device), suitability(0), vk_surface(vk_surface), application_config(application_config) {
 	suitability = this->vk_measure_physical_device_suitability();
 
 	// This populates the queue family indices
@@ -49,7 +49,7 @@ VirtualDevice::VirtualDevice(SDL_Window* sdl_window, vk::PhysicalDevice vk_physi
 	this->vk_create_logical_device(queueFamilyIndices);
 
 	// create the swapchain
-	this->swapchain = std::make_unique<SwapChain>(this->sdl_window, &this->vk_physical_device, &this->vk_device, this->vk_surface, vk::ImageUsageFlagBits::eColorAttachment, prefered_present_mode);
+	this->swapchain = std::make_unique<SwapChain>(this->application_config, this->sdl_window, &this->vk_physical_device, &this->vk_device, this->vk_surface, vk::ImageUsageFlagBits::eColorAttachment, prefered_present_mode);
 
 }
 

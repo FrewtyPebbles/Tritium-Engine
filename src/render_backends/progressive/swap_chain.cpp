@@ -13,13 +13,13 @@ SwapChainSupportDetails::SwapChainSupportDetails(const vk::PhysicalDevice& vk_ph
 	vk_present_modes = vk_physical_device.getSurfacePresentModesKHR(vk_surface);
 }
 
-SwapChain::SwapChain(SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, vk::Device* vk_device, vk::SurfaceKHR* vk_surface,
+SwapChain::SwapChain(ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, vk::Device* vk_device, vk::SurfaceKHR* vk_surface,
 	vk::ImageUsageFlags image_usage_bits,
 	// Settings:
 	vk::PresentModeKHR setting_prefered_present_mode,
 	bool setting_stereoscopic
 )
-: sdl_window(sdl_window), vk_physical_device(vk_physical_device), vk_device(vk_device), vk_surface(vk_surface) {
+: sdl_window(sdl_window), vk_physical_device(vk_physical_device), vk_device(vk_device), vk_surface(vk_surface), application_config(application_config) {
 	SwapChainSupportDetails support_details = SwapChainSupportDetails(*vk_physical_device, *vk_surface);
 
 	vk::SurfaceFormatKHR vkSurfaceFormat = choose_surface_format(support_details);
@@ -97,6 +97,45 @@ SwapChain::SwapChain(SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_dev
 	this->vk_images = this->vk_device->getSwapchainImagesKHR(this->vk_swapchain);
 
 	this->vk_image_format = vkSurfaceFormat.format;
+	
+}
+
+void SwapChain::create_image_view() {
+	this->vk_display_image_views.resize(this->vk_images.size());
+
+	for (size_t i = 0; i < this->vk_images.size(); i++) {
+		this->vk_display_image_views[i] = this->create_image_view(vk::ImageViewType::e2D, i);
+	}
+}
+
+vk::ImageView SwapChain::create_image_view(vk::ImageViewType type, size_t image_index) {
+	vk::ImageSubresourceRange createInfoSubresourceRange;
+	createInfoSubresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+	createInfoSubresourceRange.baseMipLevel = 0;
+	createInfoSubresourceRange.levelCount = 1;
+	createInfoSubresourceRange.baseArrayLayer = 0;
+	createInfoSubresourceRange.layerCount = 1;
+	vk::ImageViewCreateInfo createInfo = vk::ImageViewCreateInfo(
+		{},
+		vk_images[image_index], // TODO: add logic to select images
+		type,
+		this->vk_image_format,
+		{
+			vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity
+		},
+		createInfoSubresourceRange
+	);
+	return this->vk_device->createImageView(createInfo);
+}
+
+
+vk::ImageView SwapChain::create_image_view(string label, vk::ImageViewType type, size_t image_index) {
+	vk::ImageView imageView = this->create_image_view(type, image_index);
+	this->vk_image_view_map.insert(std::make_pair(label, imageView));
+	return imageView;
 }
 
 vk::SurfaceFormatKHR SwapChain::choose_surface_format(const SwapChainSupportDetails& support_details) {
@@ -150,5 +189,11 @@ vk::Extent2D SwapChain::choose_swap_extent(const SwapChainSupportDetails& suppor
 }
 
 void SwapChain::clean_up() {
+	for (auto& imageView : this->vk_display_image_views) {
+		this->vk_device->destroyImageView(imageView);
+	}
+	for (auto& [key, imageView] : this->vk_image_view_map) {
+		this->vk_device->destroyImageView(imageView);
+	}
 	this->vk_device->destroySwapchainKHR(this->vk_swapchain);
 }

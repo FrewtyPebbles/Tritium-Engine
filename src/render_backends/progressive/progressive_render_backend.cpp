@@ -9,15 +9,12 @@
 // ==== Class Functions ====
 
 ProgressiveRenderBackend::ProgressiveRenderBackend(
-	string application_name, string application_description,
-	vector<string> application_authors, int application_version_major,
-	int application_version_minor, int application_version_patch,
-	string application_version_identifier, Logger* logger, Uint32 sdl_only_window_flags
+	ApplicationConfig* application_config,
+	Logger* logger,
+	Uint32 sdl_only_window_flags
 )
 	: RenderBackend(
-		application_name, application_description, application_authors,
-		application_version_major, application_version_minor,
-		application_version_patch, application_version_identifier,
+		application_config,
 		logger
 	)
 {
@@ -86,11 +83,11 @@ bool ProgressiveRenderBackend::vk_create_instance() {
 
 	// Set vulkan ApplicationInfo
 	vk::ApplicationInfo vk_ApplicationInfo(
-		this->application_name.c_str(),
+		this->application_config->application_name.c_str(),
 		VK_MAKE_VERSION(
-			this->application_version_major, 
-			this->application_version_minor, 
-			this->application_version_patch
+			this->application_config->application_version_major,
+			this->application_config->application_version_minor,
+			this->application_config->application_version_patch
 		),
 		ENGINE_NAME,
 		VK_MAKE_VERSION(ENGINE_VERSION_MAJOR, ENGINE_VERSION_MINOR, ENGINE_VERSION_PATCH),
@@ -194,7 +191,7 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 	}
 
 	for (auto const& [physicalDeviceID, physicalDevice] : this->vk_physical_device_map) {
-		auto virtualDevice = std::make_shared<VirtualDevice>(this->sdl_window, physicalDevice, &this->vk_surface);
+		auto virtualDevice = std::make_shared<VirtualDevice>(this->application_config, this->sdl_window, physicalDevice, &this->vk_surface);
 		this->virtual_devices.push_back(virtualDevice);
 		this->virtual_device_priority_map.insert(std::make_pair(virtualDevice->get_suitability(), virtualDevice));
 	}

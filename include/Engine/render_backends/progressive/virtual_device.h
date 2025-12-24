@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/render_backends/progressive/constants.h"
 #include "Engine/render_backends/progressive/swap_chain.h"
+#include "Engine/state/application_config.h"
 #include <vulkan/vulkan.hpp>
 #include <optional>
 #include <memory>
@@ -24,7 +25,7 @@ struct DeviceQueues {
 
 class VirtualDevice {
 public:
-	VirtualDevice(SDL_Window* sdl_window, vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface,
+	VirtualDevice(ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface,
 		// Make this setting something setable by the user:
 		vk::PresentModeKHR prefered_present_mode = vk::PresentModeKHR::eMailbox
 	);
@@ -55,4 +56,6 @@ private:
 	uint64_t suitability;
 	vk::SurfaceKHR* vk_surface;
 	std::unique_ptr<SwapChain> swapchain;
+
+	ApplicationConfig* application_config;
 };
