@@ -30,7 +30,7 @@ public:
 
 	// Creates an image view dynamically for a sampler2D or sampler2DArray or something.
 	vk::ImageView create_image_view(string label, vk::ImageViewType type, size_t image_index);
-	vk::ImageView get_image_view(string label);
+	vk::ImageView& get_image_view(string label);
 
 private:
 
@@ -42,7 +42,7 @@ private:
 
 	vk::Extent2D choose_swap_extent(const SwapChainSupportDetails& support_details);
 
-	void create_image_view();
+	void create_display_image_views();
 
 	vk::ImageView create_image_view(vk::ImageViewType type, size_t image_index);
 

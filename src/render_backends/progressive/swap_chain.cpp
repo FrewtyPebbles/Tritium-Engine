@@ -97,10 +97,12 @@ SwapChain::SwapChain(ApplicationConfig* application_config, SDL_Window* sdl_wind
 	this->vk_images = this->vk_device->getSwapchainImagesKHR(this->vk_swapchain);
 
 	this->vk_image_format = vkSurfaceFormat.format;
+
+	this->create_display_image_views();
 	
 }
 
-void SwapChain::create_image_view() {
+void SwapChain::create_display_image_views() {
 	this->vk_display_image_views.resize(this->vk_images.size());
 
 	for (size_t i = 0; i < this->vk_images.size(); i++) {
@@ -136,6 +138,10 @@ vk::ImageView SwapChain::create_image_view(string label, vk::ImageViewType type,
 	vk::ImageView imageView = this->create_image_view(type, image_index);
 	this->vk_image_view_map.insert(std::make_pair(label, imageView));
 	return imageView;
+}
+
+vk::ImageView& SwapChain::get_image_view(string label) {
+	return this->vk_image_view_map[label];
 }
 
 vk::SurfaceFormatKHR SwapChain::choose_surface_format(const SwapChainSupportDetails& support_details) {

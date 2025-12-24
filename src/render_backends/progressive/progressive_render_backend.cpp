@@ -62,6 +62,10 @@ bool ProgressiveRenderBackend::initialize_vulkan() {
 	if (!this->vk_create_virtual_devices()) {
 		throw std::runtime_error("Failed to create virtual devices.");
 	}
+
+	if (!this->vk_create_graphics_pipelines()) {
+		throw std::runtime_error("Failed to create graphics pipelines.");
+	}
 }
 
 bool ProgressiveRenderBackend::vk_cleanup() {
@@ -138,7 +142,7 @@ bool ProgressiveRenderBackend::vk_create_instance() {
 
 bool ProgressiveRenderBackend::vk_create_surface() {
 	if (!SDL_Vulkan_CreateSurface(this->sdl_window, static_cast<VkInstance>(this->vk_instance), reinterpret_cast<VkSurfaceKHR*>(&vk_surface))) {
-		std::runtime_error("Failed to create window surface.");
+		throw std::runtime_error("Failed to create window surface.");
 		return false;
 	}
 	return true;
@@ -198,6 +202,28 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 
 	this->virtual_device = this->virtual_device_priority_map.rbegin()->second;
 }
+
+bool ProgressiveRenderBackend::vk_create_graphics_pipelines() {
+	// TODO: Create a different graphics pipeline for each scenario
+	this->graphics_pipeline_map.insert(std::make_pair("render", std::make_shared<GraphicsPipeline>(this->virtual_device->get_vulkan_device())));
+	
+	// Build the render pipeline:
+	// this renders graphics onto the screen.
+	this->graphics_pipeline_map[
+		"render"
+		]->add_stage(
+			"some_path/vert.spv",
+			"main",
+			vk::ShaderStageFlagBits::eVertex
+		)->add_stage(
+			"some_path/frag.spv",
+			"main",
+			vk::ShaderStageFlagBits::eFragment
+		);
+
+	return true;
+}
+
 
 bool ProgressiveRenderBackend::vk_check_validation_layer_support() {
 	uint32_t layerCount;

@@ -54,3 +54,5 @@ Makefile
 !/runtime/
 !/editor/
 .logs/
+.testing/
+.test/

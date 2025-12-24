@@ -32,7 +32,7 @@ public:
 
 	void clean_up();
 
-	vk::Device get_vulkan_device();
+	vk::Device* get_vulkan_device();
 	uint64_t get_suitability() const;
 	
 	static bool check_physical_device_is_suitable(vk::PhysicalDevice vk_physical_device, const vk::SurfaceKHR& vk_surface);

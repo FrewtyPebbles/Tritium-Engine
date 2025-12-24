@@ -126,8 +126,8 @@ bool VirtualDevice::check_device_extension_support(vk::PhysicalDevice vk_physica
 }
 
 
-vk::Device VirtualDevice::get_vulkan_device() {
-	return this->vk_device;
+vk::Device* VirtualDevice::get_vulkan_device() {
+	return &this->vk_device;
 }
 
 uint64_t VirtualDevice::vk_measure_physical_device_suitability() {
