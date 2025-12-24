@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 #include <vector>
+#include <SDL2/SDL.h>
 
 using std::vector;
 
@@ -13,28 +14,32 @@ struct SwapChainSupportDetails {
 
 class SwapChain {
 public:
-	SwapChain(vk::PhysicalDevice* vk_physical_device, vk::SurfaceKHR* vk_surface,
+	SwapChain(SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, vk::Device* vk_device, vk::SurfaceKHR* vk_surface,
+		vk::ImageUsageFlags image_usage_bits,
 		// This should be optionally user supplied:
-		vk::PresentModeKHR prefered_present_mode = vk::PresentModeKHR::eMailbox
+		vk::PresentModeKHR setting_prefered_present_mode = vk::PresentModeKHR::eMailbox,
+		bool setting_stereoscopic = false
 	);
+
+	void clean_up();
 
 private:
 
 	// FUNCTIONS
 
-	void choose_surface_format();
+	vk::SurfaceFormatKHR choose_surface_format(const SwapChainSupportDetails& support_details);
 
-	void choose_present_mode(vk::PresentModeKHR prefered = vk::PresentModeKHR::eMailbox);
+	vk::PresentModeKHR choose_present_mode(const SwapChainSupportDetails& support_details, vk::PresentModeKHR prefered = vk::PresentModeKHR::eMailbox);
 
-	void choose_swap_extent();
+	vk::Extent2D choose_swap_extent(const SwapChainSupportDetails& support_details);
 
 	// ATTRIBUTES
 
+	SDL_Window* sdl_window;
+
 	vk::PhysicalDevice* vk_physical_device;
+	vk::Device* vk_device;
 	vk::SurfaceKHR* vk_surface;
 
-	vk::SurfaceFormatKHR vk_surface_format;
-	vk::PresentModeKHR vk_present_mode;
-
-	SwapChainSupportDetails support_details;
+	vk::SwapchainKHR vk_swapchain;
 };

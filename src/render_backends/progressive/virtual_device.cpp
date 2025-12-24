@@ -37,31 +37,35 @@ bool QueueFamilyIndices::is_complete() const {
 }
 
 
-VirtualDevice::VirtualDevice(vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface) : vk_physical_device(vk_physical_device), suitability(0), vk_surface(vk_surface) {
+VirtualDevice::VirtualDevice(SDL_Window* sdl_window, vk::PhysicalDevice vk_physical_device, vk::SurfaceKHR* vk_surface,
+	vk::PresentModeKHR prefered_present_mode)
+: sdl_window(sdl_window), vk_physical_device(vk_physical_device), suitability(0), vk_surface(vk_surface) {
 	suitability = this->vk_measure_physical_device_suitability();
 
 	// This populates the queue family indices
-	this->queue_family_indices = QueueFamilyIndices(this->vk_physical_device, *vk_surface);
+	QueueFamilyIndices queueFamilyIndices = QueueFamilyIndices(this->vk_physical_device, *vk_surface);
 
 	// create the vk::Device
-	this->vk_create_logical_device();
+	this->vk_create_logical_device(queueFamilyIndices);
 
-	// create the swap chain
-	this->swap_chain = std::make_unique<SwapChain>(&this->vk_physical_device, this->vk_surface);
+	// create the swapchain
+	this->swapchain = std::make_unique<SwapChain>(this->sdl_window, &this->vk_physical_device, &this->vk_device, this->vk_surface, vk::ImageUsageFlagBits::eColorAttachment, prefered_present_mode);
 
 }
 
 void VirtualDevice::clean_up() {
+	this->swapchain->clean_up();
 	this->vk_device.destroy();
 }
 
-void VirtualDevice::vk_create_logical_device() {
-
+void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_indices) {
+	
+	// Create the queues
 	vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
 	std::set<uint32_t> uniqueQueueFamilies = {
-		this->queue_family_indices.graphics.value(),
-		this->queue_family_indices.present.value()
+		queue_family_indices.graphics.value(),
+		queue_family_indices.present.value()
 	};
 
 	float queuePriority = 1.0f;
@@ -104,8 +108,8 @@ void VirtualDevice::vk_create_logical_device() {
 
 	// Now get the queue handles
 
-	this->vk_device.getQueue(this->queue_family_indices.graphics.value(), 0, &this->queues.graphics);
-	this->vk_device.getQueue(this->queue_family_indices.present.value(), 0, &this->queues.present);
+	this->vk_device.getQueue(queue_family_indices.graphics.value(), 0, &this->queues.graphics);
+	this->vk_device.getQueue(queue_family_indices.present.value(), 0, &this->queues.present);
 	
 }
 

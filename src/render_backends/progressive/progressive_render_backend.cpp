@@ -194,7 +194,7 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 	}
 
 	for (auto const& [physicalDeviceID, physicalDevice] : this->vk_physical_device_map) {
-		auto virtualDevice = std::make_shared<VirtualDevice>(physicalDevice, &this->vk_surface);
+		auto virtualDevice = std::make_shared<VirtualDevice>(this->sdl_window, physicalDevice, &this->vk_surface);
 		this->virtual_devices.push_back(virtualDevice);
 		this->virtual_device_priority_map.insert(std::make_pair(virtualDevice->get_suitability(), virtualDevice));
 	}
