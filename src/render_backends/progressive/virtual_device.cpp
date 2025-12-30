@@ -78,18 +78,15 @@ void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_ind
 		);
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
-	vk::PhysicalDeviceFeatures deviceFeatures = vk::PhysicalDeviceFeatures();
+	vk::PhysicalDeviceFeatures deviceFeatures = this->vk_get_device_features(queue_family_indices);
 
 	vk::DeviceCreateInfo createInfo = vk::DeviceCreateInfo(
 		{},
 		queueCreateInfos,
 		{},
-		vkDEVICE_EXTENSIONS
+		vkDEVICE_EXTENSIONS,
+		&deviceFeatures
 	);
-
-	createInfo.pEnabledFeatures = &deviceFeatures;
-
-	// TODO: later make use of device specific extensions dynamically
 
 	// legacy vulkan support
 	if (vkENABLE_VALIDATION_LAYERS) {
@@ -111,6 +108,16 @@ void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_ind
 	this->vk_device.getQueue(queue_family_indices.graphics.value(), 0, &this->queues.graphics);
 	this->vk_device.getQueue(queue_family_indices.present.value(), 0, &this->queues.present);
 	
+}
+
+vk::PhysicalDeviceFeatures VirtualDevice::vk_get_device_features(QueueFamilyIndices queue_family_indices) {
+	vk::PhysicalDeviceFeatures supportedFeatures = this->vk_physical_device.getFeatures();
+	vk::PhysicalDeviceFeatures usedFeatures = vk::PhysicalDeviceFeatures();
+
+	// set the nessicary features if available
+	usedFeatures.multiViewport = supportedFeatures.multiViewport;
+	
+	return usedFeatures;
 }
 
 bool VirtualDevice::check_device_extension_support(vk::PhysicalDevice vk_physical_device) {

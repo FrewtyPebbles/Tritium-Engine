@@ -45,9 +45,11 @@ private:
 	static bool check_device_extension_support(vk::PhysicalDevice vk_physical_device);
 
 	uint64_t vk_measure_physical_device_suitability();
+
 	void vk_create_logical_device(QueueFamilyIndices queue_family_indices);
 
-	
+	// This is used to ensure we only use the device features we need
+	vk::PhysicalDeviceFeatures vk_get_device_features(QueueFamilyIndices queue_family_indices);
 
 
 	SDL_Window* sdl_window;

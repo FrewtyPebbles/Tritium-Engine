@@ -29,6 +29,16 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build() {
 		vk_primitive_restart
 	);
 
+	// create viewport state
+
+	vk::PipelineViewportStateCreateInfo viewPortStateCreateInfo = vk::PipelineViewportStateCreateInfo(
+		{},
+		this->vk_viewport_count,
+		nullptr,
+		this->vk_scissor_count,
+		nullptr
+	);
+
 	return std::make_shared<GraphicsPipeline>();
 }
 
@@ -97,6 +107,16 @@ GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_primitive_topology(vk::Pri
 
 GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_primitive_restart(bool vk_primitive_restart) {
 	this->vk_primitive_restart = vk_primitive_restart;
+	return this;
+}
+
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_viewport_count(uint32_t vk_viewport_count) {
+	this->vk_viewport_count = vk_viewport_count;
+	return this;
+}
+
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_scissor_count(uint32_t vk_scissor_count) {
+	this->vk_scissor_count = vk_scissor_count;
 	return this;
 }
 

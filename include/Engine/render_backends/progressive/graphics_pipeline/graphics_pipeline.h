@@ -38,6 +38,11 @@ public:
 	GraphicsPipelineBuilder* set_primitive_topology(vk::PrimitiveTopology vk_primitive_topology);
 
 	GraphicsPipelineBuilder* set_primitive_restart(bool vk_primitive_restart);
+	
+	// TODO add physical device feature check to see if multiple viewports/scissors was supported.
+	GraphicsPipelineBuilder* set_viewport_count(uint32_t vk_viewport_count);
+	// TODO add physical device feature check to see if multiple viewports/scissors was supported.
+	GraphicsPipelineBuilder* set_scissor_count(uint32_t vk_scissor_count);
 
 	// this builds out the final pipeline
 	std::shared_ptr<GraphicsPipeline> build();
@@ -68,6 +73,10 @@ private:
 	vk::PrimitiveTopology vk_primitive_topology = vk::PrimitiveTopology::eTriangleList;
 
 	bool vk_primitive_restart = false;
+
+	uint32_t vk_viewport_count = 0;
+
+	uint32_t vk_scissor_count = 0;
 };
 
 

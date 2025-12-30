@@ -234,6 +234,8 @@ bool ProgressiveRenderBackend::vk_create_graphics_pipelines() {
 		->add_dynamic_state(vk::DynamicState::eDepthCompareOp)*/
 		->set_primitive_topology(vk::PrimitiveTopology::eTriangleList)
 		->set_primitive_restart(false)
+		->set_viewport_count(1)
+		->set_scissor_count(1)
 		->build()
 	));
 
