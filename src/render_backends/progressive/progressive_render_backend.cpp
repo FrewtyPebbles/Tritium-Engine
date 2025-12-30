@@ -1,6 +1,6 @@
 #include "Engine/render_backends/progressive/progressive_render_backend.h"
 #include "Engine/constants.h"
-#include "Engine/render_backends/shared/vulkan/extensions.h"
+#include "Engine/render_backends/progressive/extensions.h"
 #include <SDL2/SDL_vulkan.h>
 #include <iostream>
 #include <sstream>
@@ -205,21 +205,37 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 
 bool ProgressiveRenderBackend::vk_create_graphics_pipelines() {
 	// TODO: Create a different graphics pipeline for each scenario
-	this->graphics_pipeline_map.insert(std::make_pair("render", std::make_shared<GraphicsPipeline>(this->virtual_device->get_vulkan_device())));
+	
 	
 	// Build the render pipeline:
 	// this renders graphics onto the screen.
-	this->graphics_pipeline_map[
-		"render"
-		]->add_stage(
-			"some_path/vert.spv",
+	this->graphics_pipeline_map.insert(std::make_pair(
+		"render",
+		GraphicsPipeline::Builder(this->virtual_device->get_vulkan_device())
+		.add_stage(
+			"shaders/.testing/vert.spv", // for now we are just using .testing since it is gitignored
 			"main",
 			vk::ShaderStageFlagBits::eVertex
 		)->add_stage(
-			"some_path/frag.spv",
+			"shaders/.testing/frag.spv", // for now we are just using .testing since it is gitignored
 			"main",
 			vk::ShaderStageFlagBits::eFragment
-		);
+		)->add_dynamic_state(vk::DynamicState::eViewport)
+		->add_dynamic_state(vk::DynamicState::eScissor)
+		/*->add_dynamic_state(vk::DynamicState::eDepthBias)
+		->add_dynamic_state(vk::DynamicState::eBlendConstants)
+		->add_dynamic_state(vk::DynamicState::eStencilReference)
+		->add_dynamic_state(vk::DynamicState::eStencilCompareMask)
+		->add_dynamic_state(vk::DynamicState::eStencilWriteMask)
+		->add_dynamic_state(vk::DynamicState::eCullMode)
+		->add_dynamic_state(vk::DynamicState::eFrontFace)
+		->add_dynamic_state(vk::DynamicState::eDepthTestEnable)
+		->add_dynamic_state(vk::DynamicState::eDepthWriteEnable)
+		->add_dynamic_state(vk::DynamicState::eDepthCompareOp)*/
+		->set_primitive_topology(vk::PrimitiveTopology::eTriangleList)
+		->set_primitive_restart(false)
+		->build()
+	));
 
 	return true;
 }

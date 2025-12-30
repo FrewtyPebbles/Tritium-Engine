@@ -4,10 +4,18 @@
 
 #include <iostream>
 #include <iomanip>
-#include "Engine/render_backends/progressive/progressive_render_backend.h"
+
 #include "Engine/constants.h"
 #include <stdexcept>
 #include "Engine/logging/logger.h"
+
+#ifdef RENDER_BACKEND_PROGRESSIVE
+#include "Engine/render_backends/progressive/progressive_render_backend.h"
+#endif // RENDER_BACKEND_PROGRESSIVE
+
+#ifdef RENDER_BACKEND_COMPATIBILITY
+#include "Engine/render_backends/compatibility/compatibility_render_backend.h"
+#endif // RENDER_BACKEND_COMPATIBILITY
 
 using std::cout, std::endl;
 
@@ -45,11 +53,21 @@ int main(int argc, char** argv)
 		);
 
 		// Create/start backend
-
+#ifdef RENDER_BACKEND_PROGRESSIVE
 		ProgressiveRenderBackend backend = ProgressiveRenderBackend(
 			&applicationConfig,
 			&logger
 		);
+#endif // RENDER_BACKEND_PROGRESSIVE
+
+#ifdef RENDER_BACKEND_COMPATIBILITY
+		CompatibilityRenderBackend backend = CompatibilityRenderBackend(
+			&applicationConfig,
+			&logger
+		);
+#endif // RENDER_BACKEND_COMPATIBILITY
+
+
 
 		backend.start_window(applicationConfig.application_name, 600, 600);
 	}
