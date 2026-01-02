@@ -1,6 +1,9 @@
 #include "Engine/render_backends/progressive/graphics_pipeline/graphics_pipeline.h"
 #include <fstream>
 
+///////////////////////////////
+// GRAPHICS PIPELINE BUILDER //
+///////////////////////////////
 
 GraphicsPipelineBuilder::GraphicsPipelineBuilder(const string& name, Logger* logger, std::shared_ptr<VirtualDevice> device)
 	: name(name), logger(logger), device(device) {
@@ -80,7 +83,17 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build() {
 		colorBlendCreateInfo.blendConstants[2] = this->vk_color_blend_constants[2];
 		colorBlendCreateInfo.blendConstants[3] = this->vk_color_blend_constants[3];
 
-	return std::make_shared<GraphicsPipeline>();
+	// create pipeline layout
+
+	vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo(
+		{},
+		this->vk_descriptor_set_layouts,
+		this->vk_push_constant_ranges
+	);
+
+	vk::PipelineLayout pipelineLayout = this->device->get_vulkan_device()->createPipelineLayout(pipelineLayoutCreateInfo);
+
+	return std::make_shared<GraphicsPipeline>(this->logger, this->device, pipelineLayout);
 }
 
 GraphicsPipelineBuilder* GraphicsPipelineBuilder::add_stage(
@@ -456,4 +469,18 @@ vector<char> GraphicsPipelineBuilder::read_binary(const string& filename) {
 	file.close();
 	
 	return buffer;
+}
+
+
+///////////////////////
+// GRAPHICS PIPELINE //
+///////////////////////
+
+GraphicsPipeline::GraphicsPipeline(Logger* logger, std::shared_ptr<VirtualDevice> device, vk::PipelineLayout vk_pipeline_layout)
+: logger(logger), device(device), vk_pipeline_layout(vk_pipeline_layout) {
+
+}
+
+void GraphicsPipeline::clean_up() {
+	this->device->get_vulkan_device()->destroyPipelineLayout(this->vk_pipeline_layout);
 }

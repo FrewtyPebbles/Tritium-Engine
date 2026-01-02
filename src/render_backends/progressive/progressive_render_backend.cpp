@@ -72,6 +72,11 @@ bool ProgressiveRenderBackend::vk_cleanup() {
 	if (vkENABLE_VALIDATION_LAYERS) {
 		VK_Extension::destroy_debug_utils_messenger_ext(this->vk_instance, this->vk_debug_messenger, nullptr);
 	}
+	// clean up graphics pipelines
+	for (const auto& [pipeName, graphicsPipeline] : this->graphics_pipeline_map) {
+		graphicsPipeline->clean_up();
+	}
+	// clean up virtual devices
 	for (const auto& virtualDevice : this->virtual_devices) {
 		virtualDevice->clean_up();
 	}

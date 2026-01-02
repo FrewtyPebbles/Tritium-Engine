@@ -28,7 +28,7 @@ public:
 
 	// BUILDER FUNCTIONS
 	// These are used to build the pipeline
-	
+
 	GraphicsPipelineBuilder* add_vertex_input_binding(uint32_t binding_index, size_t stride, vk::VertexInputRate input_rate);
 
 	GraphicsPipelineBuilder* add_vertex_input_attribute(uint32_t binding_index, uint32_t location, vk::Format format, uint32_t offset);
@@ -48,7 +48,7 @@ public:
 	GraphicsPipelineBuilder* set_primitive_restart(bool vk_primitive_restart);
 
 	// viewport
-	
+
 	GraphicsPipelineBuilder* set_viewport_count(uint32_t vk_viewport_count);
 
 	GraphicsPipelineBuilder* set_scissor_count(uint32_t vk_scissor_count);
@@ -89,8 +89,8 @@ public:
 
 	// default is alpha blending
 	GraphicsPipelineBuilder* add_color_blend_attachment(
-		vk::ColorComponentFlags vk_color_write_mask = 
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+		vk::ColorComponentFlags vk_color_write_mask =
+		vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 		bool vk_blend_enable = true,
 		vk::BlendFactor vk_src_color_blend_factor = vk::BlendFactor::eSrcAlpha,
 		vk::BlendFactor vk_dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha,
@@ -117,6 +117,8 @@ public:
 
 protected:
 
+	// TODO: Make builder compile the shader from the file and parse/find any
+	// uniforms to register.
 	static vector<char> read_binary(const string& filename);
 
 private:
@@ -136,11 +138,11 @@ private:
 
 	vector<vk::DynamicState> dynamic_states;
 
-	
+
 	vector<vk::VertexInputBindingDescription> vertex_input_bindings;
-	
+
 	vector<vk::VertexInputAttributeDescription> vertex_input_attributes;
-	
+
 	// input assembly
 
 	vk::PrimitiveTopology vk_primitive_topology = vk::PrimitiveTopology::eTriangleList;
@@ -210,8 +212,13 @@ private:
 
 	vk::LogicOp vk_color_blend_logical_op = vk::LogicOp::eCopy;
 
-	float vk_color_blend_constants[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	float vk_color_blend_constants[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
+	// Pipeline Layout
+	// TODO : Create api to add uniforms and push constants.
+	vector<vk::DescriptorSetLayout> vk_descriptor_set_layouts;
+
+	vector<vk::PushConstantRange> vk_push_constant_ranges;
 };
 
 
@@ -219,6 +226,14 @@ class GraphicsPipeline {
 public:
 	using Builder = GraphicsPipelineBuilder;
 
-	GraphicsPipeline() = default;
+	GraphicsPipeline(Logger* logger, std::shared_ptr<VirtualDevice> device, vk::PipelineLayout vk_pipeline_layout);
 
+	void clean_up();
+
+private:
+
+	Logger* logger;
+	std::shared_ptr<VirtualDevice> device;
+
+	vk::PipelineLayout vk_pipeline_layout;
 };
