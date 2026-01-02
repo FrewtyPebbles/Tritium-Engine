@@ -1,11 +1,11 @@
-#include "Engine/render_backends/progressive/graphics_pipeline/graphics_pipeline.h"
+#include "Engine/render_backends/progressive/graphics_pipeline.h"
 #include <fstream>
 
 ///////////////////////////////
 // GRAPHICS PIPELINE BUILDER //
 ///////////////////////////////
 
-GraphicsPipelineBuilder::GraphicsPipelineBuilder(const string& name, Logger* logger, std::shared_ptr<VirtualDevice> device)
+GraphicsPipelineBuilder::GraphicsPipelineBuilder(const string& name, Logger* logger, VirtualDevice* device)
 	: name(name), logger(logger), device(device) {
 
 }
@@ -476,7 +476,7 @@ vector<char> GraphicsPipelineBuilder::read_binary(const string& filename) {
 // GRAPHICS PIPELINE //
 ///////////////////////
 
-GraphicsPipeline::GraphicsPipeline(Logger* logger, std::shared_ptr<VirtualDevice> device, vk::PipelineLayout vk_pipeline_layout)
+GraphicsPipeline::GraphicsPipeline(Logger* logger, VirtualDevice* device, vk::PipelineLayout vk_pipeline_layout)
 : logger(logger), device(device), vk_pipeline_layout(vk_pipeline_layout) {
 
 }

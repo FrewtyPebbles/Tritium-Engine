@@ -62,20 +62,13 @@ bool ProgressiveRenderBackend::initialize_vulkan() {
 	if (!this->vk_create_virtual_devices()) {
 		throw std::runtime_error("Failed to create virtual devices.");
 	}
-
-	if (!this->vk_create_graphics_pipelines()) {
-		throw std::runtime_error("Failed to create graphics pipelines.");
-	}
 }
 
 bool ProgressiveRenderBackend::vk_cleanup() {
 	if (vkENABLE_VALIDATION_LAYERS) {
 		VK_Extension::destroy_debug_utils_messenger_ext(this->vk_instance, this->vk_debug_messenger, nullptr);
 	}
-	// clean up graphics pipelines
-	for (const auto& [pipeName, graphicsPipeline] : this->graphics_pipeline_map) {
-		graphicsPipeline->clean_up();
-	}
+
 	// clean up virtual devices
 	for (const auto& virtualDevice : this->virtual_devices) {
 		virtualDevice->clean_up();
@@ -206,45 +199,6 @@ bool ProgressiveRenderBackend::vk_create_virtual_devices() {
 	}
 
 	this->virtual_device = this->virtual_device_priority_map.rbegin()->second;
-}
-
-bool ProgressiveRenderBackend::vk_create_graphics_pipelines() {
-	// TODO: Create a different graphics pipeline for each scenario
-	
-	// Build the render pipeline:
-	// this renders graphics onto the screen.
-	this->graphics_pipeline_map.insert(std::make_pair(
-		"render",
-		GraphicsPipeline::Builder("render", this->logger, this->virtual_device)
-		.add_stage(
-			"shaders/.testing/vert.spv", // for now we are just using .testing since it is gitignored
-			"main",
-			vk::ShaderStageFlagBits::eVertex
-		)->add_stage(
-			"shaders/.testing/frag.spv", // for now we are just using .testing since it is gitignored
-			"main",
-			vk::ShaderStageFlagBits::eFragment
-		)->add_dynamic_state(vk::DynamicState::eViewport)
-		->add_dynamic_state(vk::DynamicState::eScissor)
-		/*->add_dynamic_state(vk::DynamicState::eDepthBias)
-		->add_dynamic_state(vk::DynamicState::eBlendConstants)
-		->add_dynamic_state(vk::DynamicState::eStencilReference)
-		->add_dynamic_state(vk::DynamicState::eStencilCompareMask)
-		->add_dynamic_state(vk::DynamicState::eStencilWriteMask)
-		->add_dynamic_state(vk::DynamicState::eCullMode)
-		->add_dynamic_state(vk::DynamicState::eFrontFace)
-		->add_dynamic_state(vk::DynamicState::eDepthTestEnable)
-		->add_dynamic_state(vk::DynamicState::eDepthWriteEnable)
-		->add_dynamic_state(vk::DynamicState::eDepthCompareOp)*/
-		->set_primitive_topology(vk::PrimitiveTopology::eTriangleList)
-		->set_primitive_restart(false)
-		->set_viewport_count(1)
-		->set_scissor_count(1)
-		->set_multisampling(false, vk::SampleCountFlagBits::e64)
-		->build()
-	));
-
-	return true;
 }
 
 

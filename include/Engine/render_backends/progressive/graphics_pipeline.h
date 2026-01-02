@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <string>
 
 using std::vector;
 using std::string;
@@ -24,7 +23,7 @@ class GraphicsPipeline;
 class GraphicsPipelineBuilder {
 public:
 	// Creates the graphics pipeline builder
-	GraphicsPipelineBuilder(const string& name, Logger* logger, std::shared_ptr<VirtualDevice> device);
+	GraphicsPipelineBuilder(const string& name, Logger* logger, VirtualDevice* device);
 
 	// BUILDER FUNCTIONS
 	// These are used to build the pipeline
@@ -130,7 +129,7 @@ private:
 
 	Logger* logger;
 
-	std::shared_ptr<VirtualDevice> device;
+	VirtualDevice* device;
 
 	// Pipeline create info
 
@@ -226,14 +225,14 @@ class GraphicsPipeline {
 public:
 	using Builder = GraphicsPipelineBuilder;
 
-	GraphicsPipeline(Logger* logger, std::shared_ptr<VirtualDevice> device, vk::PipelineLayout vk_pipeline_layout);
+	GraphicsPipeline(Logger* logger, VirtualDevice* device, vk::PipelineLayout vk_pipeline_layout);
 
 	void clean_up();
 
 private:
 
 	Logger* logger;
-	std::shared_ptr<VirtualDevice> device;
+	VirtualDevice* device;
 
 	vk::PipelineLayout vk_pipeline_layout;
 };

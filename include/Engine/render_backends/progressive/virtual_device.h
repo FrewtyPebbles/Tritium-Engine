@@ -42,7 +42,11 @@ public:
 	
 	DeviceQueues queues;
 
+	std::unique_ptr<SwapChain> swapchain;
+
 	vk::PhysicalDeviceFeatures vk_device_features;
+
+	vk::PhysicalDeviceDynamicRenderingFeatures vk_device_dynamic_rendering_features;
 
 	vk::PhysicalDeviceProperties vk_device_properties;
 
@@ -55,7 +59,7 @@ private:
 	void vk_create_logical_device(QueueFamilyIndices queue_family_indices);
 
 	// This is used to ensure we only use the device features we need
-	vk::PhysicalDeviceFeatures vk_get_device_features(QueueFamilyIndices queue_family_indices);
+	void vk_get_device_features(QueueFamilyIndices queue_family_indices);
 
 
 	SDL_Window* sdl_window;
@@ -63,7 +67,7 @@ private:
 	vk::PhysicalDevice vk_physical_device;
 	uint64_t suitability;
 	vk::SurfaceKHR* vk_surface;
-	std::unique_ptr<SwapChain> swapchain;
+	
 
 	ApplicationConfig* application_config;
 	Logger* logger;

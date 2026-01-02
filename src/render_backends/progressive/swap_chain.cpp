@@ -1,6 +1,7 @@
 #include "Engine/render_backends/progressive/swap_chain.h"
 #include "Engine/render_backends/progressive/constants.h"
 #include "Engine/render_backends/progressive/virtual_device.h"
+#include "Engine/render_backends/progressive/graphics_pipeline.h"
 #include <SDL2/SDL_vulkan.h>
 #include <cstdint>
 #include <limits>
@@ -13,13 +14,13 @@ SwapChainSupportDetails::SwapChainSupportDetails(const vk::PhysicalDevice& vk_ph
 	vk_present_modes = vk_physical_device.getSurfacePresentModesKHR(vk_surface);
 }
 
-SwapChain::SwapChain(Logger* logger, ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, vk::Device* vk_device, vk::SurfaceKHR* vk_surface,
+SwapChain::SwapChain(Logger* logger, ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, VirtualDevice* device, vk::SurfaceKHR* vk_surface,
 	vk::ImageUsageFlags image_usage_bits,
 	// Settings:
 	vk::PresentModeKHR setting_prefered_present_mode,
 	bool setting_stereoscopic
 )
-: sdl_window(sdl_window), vk_physical_device(vk_physical_device), vk_device(vk_device), vk_surface(vk_surface), application_config(application_config), logger(logger) {
+: sdl_window(sdl_window), vk_physical_device(vk_physical_device), device(device), vk_surface(vk_surface), application_config(application_config), logger(logger) {
 	SwapChainSupportDetails support_details = SwapChainSupportDetails(*vk_physical_device, *vk_surface);
 
 	vk::SurfaceFormatKHR vkSurfaceFormat = choose_surface_format(support_details);
@@ -91,15 +92,18 @@ SwapChain::SwapChain(Logger* logger, ApplicationConfig* application_config, SDL_
 	}
 
 	// create the actual swap chain internally in vulkan:
-	this->vk_swapchain = this->vk_device->createSwapchainKHR(createInfo);
+	this->vk_swapchain = this->device->get_vulkan_device()->createSwapchainKHR(createInfo);
 
 	// Getting the handles to the images in the swap chain:
-	this->vk_images = this->vk_device->getSwapchainImagesKHR(this->vk_swapchain);
+	this->vk_images = this->device->get_vulkan_device()->getSwapchainImagesKHR(this->vk_swapchain);
 
 	this->vk_image_format = vkSurfaceFormat.format;
 
 	this->create_display_image_views();
 	
+	if (!this->create_graphics_pipelines()) {
+		throw std::runtime_error("Failed to create graphics pipelines.");
+	}
 }
 
 void SwapChain::create_display_image_views() {
@@ -130,7 +134,7 @@ vk::ImageView SwapChain::create_image_view(vk::ImageViewType type, size_t image_
 		},
 		createInfoSubresourceRange
 	);
-	return this->vk_device->createImageView(createInfo);
+	return this->device->get_vulkan_device()->createImageView(createInfo);
 }
 
 
@@ -195,11 +199,60 @@ vk::Extent2D SwapChain::choose_swap_extent(const SwapChainSupportDetails& suppor
 }
 
 void SwapChain::clean_up() {
+	// clean up graphics pipelines
+	for (const auto& [pipeName, graphicsPipeline] : this->graphics_pipeline_map) {
+		graphicsPipeline->clean_up();
+	}
+
 	for (auto& imageView : this->vk_display_image_views) {
-		this->vk_device->destroyImageView(imageView);
+		this->device->get_vulkan_device()->destroyImageView(imageView);
 	}
 	for (auto& [key, imageView] : this->vk_image_view_map) {
-		this->vk_device->destroyImageView(imageView);
+		this->device->get_vulkan_device()->destroyImageView(imageView);
 	}
-	this->vk_device->destroySwapchainKHR(this->vk_swapchain);
+	this->device->get_vulkan_device()->destroySwapchainKHR(this->vk_swapchain);
+}
+
+// GRAPHICS PIPELINES
+
+bool SwapChain::create_graphics_pipelines() {
+	// TODO: Create a different graphics pipeline for each scenario
+
+	// Build the render pipeline:
+	// this renders graphics onto the screen.
+
+	/// Create Graphics Pipeline:
+
+	this->graphics_pipeline_map.insert(std::make_pair(
+		"render",
+		GraphicsPipeline::Builder("render", this->logger, this->device)
+		.add_stage(
+			"shaders/.testing/vert.spv", // for now we are just using .testing since it is gitignored
+			"main",
+			vk::ShaderStageFlagBits::eVertex
+		)->add_stage(
+			"shaders/.testing/frag.spv", // for now we are just using .testing since it is gitignored
+			"main",
+			vk::ShaderStageFlagBits::eFragment
+		)->add_dynamic_state(vk::DynamicState::eViewport)
+		->add_dynamic_state(vk::DynamicState::eScissor)
+		/*->add_dynamic_state(vk::DynamicState::eDepthBias)
+		->add_dynamic_state(vk::DynamicState::eBlendConstants)
+		->add_dynamic_state(vk::DynamicState::eStencilReference)
+		->add_dynamic_state(vk::DynamicState::eStencilCompareMask)
+		->add_dynamic_state(vk::DynamicState::eStencilWriteMask)
+		->add_dynamic_state(vk::DynamicState::eCullMode)
+		->add_dynamic_state(vk::DynamicState::eFrontFace)
+		->add_dynamic_state(vk::DynamicState::eDepthTestEnable)
+		->add_dynamic_state(vk::DynamicState::eDepthWriteEnable)
+		->add_dynamic_state(vk::DynamicState::eDepthCompareOp)*/
+		->set_primitive_topology(vk::PrimitiveTopology::eTriangleList)
+		->set_primitive_restart(false)
+		->set_viewport_count(1)
+		->set_scissor_count(1)
+		->set_multisampling(false, vk::SampleCountFlagBits::e64)
+		->build()
+	));
+
+	return true;
 }

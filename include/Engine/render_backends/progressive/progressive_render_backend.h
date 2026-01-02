@@ -3,7 +3,6 @@
 #include "Engine/render_backends/render_backend.h"
 #include "Engine/render_backends/progressive/virtual_device.h"
 #include "Engine/render_backends/progressive/constants.h"
-#include "Engine/render_backends/progressive/graphics_pipeline/graphics_pipeline.h"
 #include <vulkan/vulkan.hpp>
 #include <map>
 #include <memory>
@@ -81,10 +80,6 @@ private:
 	bool vk_create_surface();
 
 	bool vk_create_virtual_devices();
-	
-	bool vk_create_graphics_pipelines();
-	/// Creates the different graphics pipelines for different things such as depth buffering
-	/// or lighting
 
 	// = Validation = 
 	// ---
@@ -127,8 +122,6 @@ private:
 
 	vk::Queue vk_queue;
 	vk::DebugUtilsMessengerEXT vk_debug_messenger;
-
-	unordered_map<string, std::shared_ptr<GraphicsPipeline>> graphics_pipeline_map;
 
 };
 

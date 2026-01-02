@@ -11,6 +11,9 @@ using std::vector;
 using std::unordered_map;
 using std::string;
 
+class VirtualDevice;
+class GraphicsPipeline;
+
 struct SwapChainSupportDetails {
 	SwapChainSupportDetails(const vk::PhysicalDevice& vk_physical_device, const vk::SurfaceKHR& vk_surface);
 	vk::SurfaceCapabilitiesKHR vk_surface_capabilities;
@@ -20,7 +23,7 @@ struct SwapChainSupportDetails {
 
 class SwapChain {
 public:
-	SwapChain(Logger* logger, ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, vk::Device* vk_device, vk::SurfaceKHR* vk_surface,
+	SwapChain(Logger* logger, ApplicationConfig* application_config, SDL_Window* sdl_window, vk::PhysicalDevice* vk_physical_device, VirtualDevice * device, vk::SurfaceKHR* vk_surface,
 		vk::ImageUsageFlags image_usage_bits,
 		// This should be optionally user supplied:
 		vk::PresentModeKHR setting_prefered_present_mode = vk::PresentModeKHR::eMailbox,
@@ -32,6 +35,9 @@ public:
 	// Creates an image view dynamically for a sampler2D or sampler2DArray or something.
 	vk::ImageView create_image_view(string label, vk::ImageViewType type, size_t image_index);
 	vk::ImageView& get_image_view(string label);
+
+	vk::Format vk_image_format;
+	vk::Extent2D vk_extent;
 
 private:
 
@@ -47,13 +53,16 @@ private:
 
 	vk::ImageView create_image_view(vk::ImageViewType type, size_t image_index);
 
+	bool create_graphics_pipelines();
+	/// Creates the different graphics pipelines for different things such as depth buffering
+	/// or lighting
 
 	// ATTRIBUTES
 
 	SDL_Window* sdl_window;
 
 	vk::PhysicalDevice* vk_physical_device;
-	vk::Device* vk_device;
+	VirtualDevice* device;
 	vk::SurfaceKHR* vk_surface;
 
 	vk::SwapchainKHR vk_swapchain;
@@ -61,9 +70,11 @@ private:
 	unordered_map<string, vk::ImageView> vk_image_view_map;
 	vector<vk::ImageView> vk_display_image_views;
 	vector<vk::Image> vk_images;
-	vk::Format vk_image_format;
-	vk::Extent2D vk_extent;
 	
 	ApplicationConfig* application_config;
 	Logger* logger;
+
+	// GRAPHICS PIPELINE
+
+	unordered_map<string, std::shared_ptr<GraphicsPipeline>> graphics_pipeline_map;
 };

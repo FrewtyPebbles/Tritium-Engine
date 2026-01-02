@@ -49,7 +49,7 @@ VirtualDevice::VirtualDevice(Logger* logger, ApplicationConfig* application_conf
 	this->vk_create_logical_device(queueFamilyIndices);
 
 	// create the swapchain
-	this->swapchain = std::make_unique<SwapChain>(this->logger, this->application_config, this->sdl_window, &this->vk_physical_device, &this->vk_device, this->vk_surface, vk::ImageUsageFlagBits::eColorAttachment, prefered_present_mode);
+	this->swapchain = std::make_unique<SwapChain>(this->logger, this->application_config, this->sdl_window, &this->vk_physical_device, this, this->vk_surface, vk::ImageUsageFlagBits::eColorAttachment, prefered_present_mode);
 
 }
 
@@ -80,7 +80,7 @@ void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_ind
 	}
 	
 	// save features for later config settings
-	this->vk_device_features = this->vk_get_device_features(queue_family_indices);
+	this->vk_get_device_features(queue_family_indices);
 
 	this->vk_device_properties = this->vk_physical_device.getProperties();
 
@@ -89,7 +89,8 @@ void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_ind
 		queueCreateInfos,
 		{},
 		vkDEVICE_EXTENSIONS,
-		&vk_device_features
+		&vk_device_features,
+		&vk_device_dynamic_rendering_features
 	);
 
 	// legacy vulkan support
@@ -114,16 +115,20 @@ void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_ind
 	
 }
 
-vk::PhysicalDeviceFeatures VirtualDevice::vk_get_device_features(QueueFamilyIndices queue_family_indices) {
+void VirtualDevice::vk_get_device_features(QueueFamilyIndices queue_family_indices) {
 	vk::PhysicalDeviceFeatures supportedFeatures = this->vk_physical_device.getFeatures();
 	vk::PhysicalDeviceFeatures usedFeatures = vk::PhysicalDeviceFeatures();
+	vk::PhysicalDeviceDynamicRenderingFeatures usedDynamicRenderingFeatures = vk::PhysicalDeviceDynamicRenderingFeatures();
+
 
 	// TODO: Set requirements based on settings specified in ApplicationConfig
 	// these settings should also affect how the graphics pipeline is set up.
 	// set the nessicary features if available
 	usedFeatures.multiViewport = supportedFeatures.multiViewport;
+	usedDynamicRenderingFeatures.dynamicRendering = vk::True;
 	
-	return usedFeatures;
+	this->vk_device_features = usedFeatures;
+	this->vk_device_dynamic_rendering_features = usedDynamicRenderingFeatures;
 }
 
 bool VirtualDevice::check_device_extension_support(vk::PhysicalDevice vk_physical_device) {
