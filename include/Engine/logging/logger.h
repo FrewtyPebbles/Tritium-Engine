@@ -32,6 +32,7 @@ public:
 	
 
 	void log(string message, string pipe_name, Log::Domain domain, Log::Severity severity);
+	void flush();
 private:
 	static void thread_main(Logger* self);
 
@@ -44,6 +45,7 @@ private:
 	thread logging_thread;
 	bool thread_running = false;
 	std::condition_variable cv;
+	std::condition_variable flush_cv;
 	std::mutex mtx;
 	bool errored = false;
 	string error_msg;

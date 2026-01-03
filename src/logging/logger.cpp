@@ -31,14 +31,23 @@ void Logger::thread_main(Logger* self) {
 
 		self->cv.wait(lock, [self] { return !self->log_queue.empty() || !self->thread_running; });
 
-		if (!self->thread_running)
+		if (!self->thread_running && self->log_queue.empty())
 			break;
+
+		if (self->log_queue.empty())
+			continue;
 
 		LogMessage log = self->log_queue.front();
 		self->log_queue.pop();
+		
 		lock.unlock();
 
 		self->serial_log(log);
+		
+		lock.lock();
+		if (self->log_queue.empty()) {
+			self->flush_cv.notify_all();
+		}
 	}
 }
 
@@ -82,4 +91,10 @@ void Logger::log(string message, string pipe_name, Log::Domain domain, Log::Seve
 		);
 	}
 	cv.notify_one();
+}
+
+void Logger::flush() {
+	std::unique_lock<std::mutex> lock(mtx);
+	cv.notify_one();
+	flush_cv.wait(lock, [this] { return log_queue.empty() || !thread_running; });
 }

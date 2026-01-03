@@ -74,6 +74,9 @@ string LogPipe::format(string message, Log::Domain domain, Log::Severity severit
 	case Log::Severity::VERBOSE:
 		severity_string = "VERBOSE";
 		break;
+	case Log::Severity::DEBUG:
+		severity_string = "DEBUG";
+		break;
 	}
 
 	std::ostringstream ss;
@@ -87,6 +90,7 @@ string LogPipe::format(string message, Log::Domain domain, Log::Severity severit
 
 void LogPipe::writeln(string msg) {
 	this->file << msg << "\n";
+	this->file.flush();
 }
 
 void LogPipe::log(string message, Log::Domain domain, Log::Severity severity, std::tm time) {

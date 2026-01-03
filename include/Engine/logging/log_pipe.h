@@ -20,7 +20,8 @@ namespace Log {
 		WARNING = 1,
 		ERROR = 2,
 		FATAL = 3,
-		VERBOSE = 4
+		VERBOSE = 4,
+		DEBUG = 5
 	};
 }
 // There should only be one pipe per file.
