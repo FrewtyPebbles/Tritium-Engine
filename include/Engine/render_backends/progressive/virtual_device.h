@@ -46,7 +46,7 @@ public:
 
 	vk::PhysicalDeviceFeatures vk_device_features;
 
-	vk::PhysicalDeviceDynamicRenderingFeatures vk_device_dynamic_rendering_features;
+	vk::PhysicalDeviceDynamicRenderingFeaturesKHR vk_device_dynamic_rendering_features;
 
 	vk::PhysicalDeviceProperties vk_device_properties;
 

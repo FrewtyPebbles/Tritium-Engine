@@ -118,7 +118,7 @@ void VirtualDevice::vk_create_logical_device(QueueFamilyIndices queue_family_ind
 void VirtualDevice::vk_get_device_features(QueueFamilyIndices queue_family_indices) {
 	vk::PhysicalDeviceFeatures supportedFeatures = this->vk_physical_device.getFeatures();
 	vk::PhysicalDeviceFeatures usedFeatures = vk::PhysicalDeviceFeatures();
-	vk::PhysicalDeviceDynamicRenderingFeatures usedDynamicRenderingFeatures = vk::PhysicalDeviceDynamicRenderingFeatures();
+	vk::PhysicalDeviceDynamicRenderingFeaturesKHR usedDynamicRenderingFeatures = vk::PhysicalDeviceDynamicRenderingFeaturesKHR();
 
 
 	// TODO: Set requirements based on settings specified in ApplicationConfig

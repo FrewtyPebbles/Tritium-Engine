@@ -251,6 +251,8 @@ bool SwapChain::create_graphics_pipelines() {
 		->set_viewport_count(1)
 		->set_scissor_count(1)
 		->set_multisampling(false, vk::SampleCountFlagBits::e64)
+		->add_color_blend_attachment()
+		->add_color_attachment_format(this->vk_image_format)
 		->build()
 	));
 

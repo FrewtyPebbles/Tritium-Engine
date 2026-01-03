@@ -74,6 +74,8 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build() {
 	// create color blend state
 
 	vk::PipelineColorBlendStateCreateInfo colorBlendCreateInfo;
+		colorBlendCreateInfo.sType = vk::StructureType::ePipelineColorBlendStateCreateInfo;
+		colorBlendCreateInfo.flags = {};
 		colorBlendCreateInfo.logicOpEnable = this->vk_color_blend_logical_op_enable;
 		colorBlendCreateInfo.logicOp = this->vk_color_blend_logical_op;
 		colorBlendCreateInfo.attachmentCount = this->vk_color_blend_attachments.size();
@@ -93,7 +95,59 @@ std::shared_ptr<GraphicsPipeline> GraphicsPipelineBuilder::build() {
 
 	vk::PipelineLayout pipelineLayout = this->device->get_vulkan_device()->createPipelineLayout(pipelineLayoutCreateInfo);
 
-	return std::make_shared<GraphicsPipeline>(this->logger, this->device, pipelineLayout);
+	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo = vk::GraphicsPipelineCreateInfo(
+		this->base_graphics_pipeline != nullptr ? vk::PipelineCreateFlagBits::eDerivative : vk::PipelineCreateFlags(),
+		this->shader_stages,
+		& vertexInputCreateInfo,
+		& inputAssemblyCreateInfo,
+		nullptr, // TODO: add tessellation state
+		& viewPortStateCreateInfo,
+		& rasterizationCreateInfo,
+		& multisamplingCreateInfo,
+		nullptr, // TODO: add depth stencil state
+		& colorBlendCreateInfo,
+		& dynamicStateCreateInfo,
+		pipelineLayout,
+		VK_NULL_HANDLE, // using dynamic rendering
+		0, // subpasses
+		this->base_graphics_pipeline != nullptr ? this->base_graphics_pipeline->vk_get_pipeline() : nullptr
+	);
+
+	// create pipeline rendering info for dynamic rendering
+
+	vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfo(
+		{},
+		static_cast<uint32_t>(this->color_attachment_formats.size()),
+		this->color_attachment_formats.data(),
+		this->depth_attachment_format,
+		this->stencil_attachment_format
+	);
+
+	graphicsPipelineCreateInfo.pNext = &pipelineRenderingCreateInfo;
+
+	auto [result, pipeline] = this->device->get_vulkan_device()->createGraphicsPipeline({}, graphicsPipelineCreateInfo);
+
+	if (result != vk::Result::eSuccess) {
+		this->logger->log(
+			"Failed to create graphics pipeline \""
+			+ this->name
+			+ "\" when calling vk::Device::createGraphicsPipeline.",
+			"rendering",
+			Log::Domain::RENDERING,
+			Log::Severity::FATAL
+		);
+	}
+
+	this->clean_up();
+
+	return std::make_shared<GraphicsPipeline>(this->logger, this->device, pipeline, pipelineLayout);
+}
+
+void GraphicsPipelineBuilder::clean_up() {
+	// this is called at the end of the build function.
+	for (const auto& shaderModule : this->shader_modules) {
+		this->device->get_vulkan_device()->destroyShaderModule(shaderModule);
+	}
 }
 
 GraphicsPipelineBuilder* GraphicsPipelineBuilder::add_stage(
@@ -104,18 +158,21 @@ GraphicsPipelineBuilder* GraphicsPipelineBuilder::add_stage(
 	auto shaderCode = this->read_binary(shader_path);
 
 	vk::ShaderModule shaderModule = this->create_shader_module(shaderCode);
+	
+	this->shader_entry_points.push_back(entry_point);
+
+	const char* persistentEntryPointName = this->shader_entry_points.back().c_str();
 
 	vk::PipelineShaderStageCreateInfo shaderStageCreateInfo = vk::PipelineShaderStageCreateInfo(
 		{},
 		stage,
 		shaderModule,
-		entry_point.c_str()
+		persistentEntryPointName
 	);
 
-	stages.push_back(shaderStageCreateInfo);
+	this->shader_stages.push_back(shaderStageCreateInfo);
 
-	// clean up
-	this->device->get_vulkan_device()->destroyShaderModule(shaderModule);
+	this->shader_modules.push_back(shaderModule);
 
 	return this;
 }
@@ -240,7 +297,7 @@ GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_polygon_mode(vk::PolygonMo
 	return this;
 }
 
-GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_line_width(const float& vk_request_line_width) {
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_line_width(float vk_request_line_width) {
 	if (this->device->vk_device_features.wideLines) {
 		this->vk_line_width = std::clamp(vk_request_line_width,
 			this->device->vk_device_properties.limits.lineWidthRange[0],
@@ -454,6 +511,26 @@ GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_color_blend_constants(
 	return this;
 }
 
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_base_pipeline(std::shared_ptr<GraphicsPipeline> base_pipeline) {
+	this->base_graphics_pipeline = base_pipeline;
+	return this;
+}
+
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::add_color_attachment_format(vk::Format format) {
+	this->color_attachment_formats.push_back(format);
+	return this;
+}
+
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_depth_attachment_format(vk::Format format) {
+	this->depth_attachment_format = format;
+	return this;
+}
+
+GraphicsPipelineBuilder* GraphicsPipelineBuilder::set_stencil_attachment_format(vk::Format format) {
+	this->stencil_attachment_format = format;
+	return this;
+}
+
 vector<char> GraphicsPipelineBuilder::read_binary(const string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 	if (!file.is_open()) {
@@ -476,11 +553,16 @@ vector<char> GraphicsPipelineBuilder::read_binary(const string& filename) {
 // GRAPHICS PIPELINE //
 ///////////////////////
 
-GraphicsPipeline::GraphicsPipeline(Logger* logger, VirtualDevice* device, vk::PipelineLayout vk_pipeline_layout)
-: logger(logger), device(device), vk_pipeline_layout(vk_pipeline_layout) {
+GraphicsPipeline::GraphicsPipeline(Logger* logger, VirtualDevice* device, vk::Pipeline vk_pipeline, vk::PipelineLayout vk_pipeline_layout)
+: logger(logger), device(device), vk_pipeline(vk_pipeline), vk_pipeline_layout(vk_pipeline_layout) {
 
 }
 
 void GraphicsPipeline::clean_up() {
+	this->device->get_vulkan_device()->destroyPipeline(this->vk_pipeline);
 	this->device->get_vulkan_device()->destroyPipelineLayout(this->vk_pipeline_layout);
+}
+
+vk::Pipeline GraphicsPipeline::vk_get_pipeline() {
+	return this->vk_pipeline;
 }

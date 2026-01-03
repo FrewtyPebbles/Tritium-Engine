@@ -6,9 +6,11 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <deque>
 
 using std::vector;
 using std::string;
+using std::deque;
 
 // === NOTES ===
 
@@ -27,6 +29,8 @@ public:
 
 	// BUILDER FUNCTIONS
 	// These are used to build the pipeline
+
+	// TODO ADD Depth stencil state.
 
 	GraphicsPipelineBuilder* add_vertex_input_binding(uint32_t binding_index, size_t stride, vk::VertexInputRate input_rate);
 
@@ -60,7 +64,7 @@ public:
 
 	GraphicsPipelineBuilder* set_polygon_mode(vk::PolygonMode vk_polygon_mode);
 
-	GraphicsPipelineBuilder* set_line_width(const float& vk_request_line_width);
+	GraphicsPipelineBuilder* set_line_width(float vk_request_line_width);
 
 	GraphicsPipelineBuilder* set_cull_mode(vk::CullModeFlags vk_cull_mode);
 
@@ -111,8 +115,23 @@ public:
 		float a = 0.0f
 	);
 
+	// derivative pipelines
+
+	GraphicsPipelineBuilder* set_base_pipeline(std::shared_ptr<GraphicsPipeline> base_pipeline);
+
+	// dynamic rendering
+
+	GraphicsPipelineBuilder* add_color_attachment_format(vk::Format format);
+	
+	GraphicsPipelineBuilder* set_depth_attachment_format(vk::Format format);
+	
+	GraphicsPipelineBuilder* set_stencil_attachment_format(vk::Format format);
+
 	// this builds out the final pipeline
 	std::shared_ptr<GraphicsPipeline> build();
+
+	// this is called after build
+	void clean_up();
 
 protected:
 
@@ -133,7 +152,10 @@ private:
 
 	// Pipeline create info
 
-	vector<vk::PipelineShaderStageCreateInfo> stages;
+	vector<vk::PipelineShaderStageCreateInfo> shader_stages;
+	vector<vk::ShaderModule> shader_modules;
+	// we use a deque because vector is not guaranteed to store its memory in the same address on resize/reallocation.
+	deque<string> shader_entry_points;
 
 	vector<vk::DynamicState> dynamic_states;
 
@@ -218,6 +240,18 @@ private:
 	vector<vk::DescriptorSetLayout> vk_descriptor_set_layouts;
 
 	vector<vk::PushConstantRange> vk_push_constant_ranges;
+
+	// derivative pipelines
+
+	std::shared_ptr<GraphicsPipeline> base_graphics_pipeline = nullptr;
+
+	// dynamic rendering
+
+	vector<vk::Format> color_attachment_formats;
+
+	vk::Format depth_attachment_format = vk::Format::eUndefined;
+
+	vk::Format stencil_attachment_format = vk::Format::eUndefined;
 };
 
 
@@ -225,14 +259,17 @@ class GraphicsPipeline {
 public:
 	using Builder = GraphicsPipelineBuilder;
 
-	GraphicsPipeline(Logger* logger, VirtualDevice* device, vk::PipelineLayout vk_pipeline_layout);
+	GraphicsPipeline(Logger* logger, VirtualDevice* device, vk::Pipeline vk_pipeline, vk::PipelineLayout vk_pipeline_layout);
 
 	void clean_up();
+
+	vk::Pipeline vk_get_pipeline();
 
 private:
 
 	Logger* logger;
 	VirtualDevice* device;
 
+	vk::Pipeline vk_pipeline;
 	vk::PipelineLayout vk_pipeline_layout;
 };
