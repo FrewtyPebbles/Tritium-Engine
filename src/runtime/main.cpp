@@ -70,6 +70,8 @@ int main(int argc, char** argv)
 
 
 		backend.start_window(applicationConfig.application_name, 600, 600);
+
+		logger.flush();
 	}
 	catch (std::runtime_error error) {
 		std::cerr << "Fatal Error: " << error.what() << "\n";
