@@ -1,6 +1,6 @@
-# GameEngine
+# Tritium Engine
 
-A Node/Scene based Vulkan game engine.
+A Node/Scene based Vulkan and OpenGL game engine.
 
 ## Contributions
 
