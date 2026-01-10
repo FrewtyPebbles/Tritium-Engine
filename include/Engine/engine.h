@@ -6,6 +6,10 @@
 using std::string;
 using std::vector;
 
+namespace ThreadPool {
+	class Pool;
+};
+
 class RenderBackend;
 class Logger;
 
@@ -16,6 +20,7 @@ namespace Tritium {
 		Engine(
 			RenderBackend* render_backend,
 			Logger* logger,
+			ThreadPool::Pool* thread_pool,
 			string application_name,
 			string application_description,
 			vector<string> application_authors,
@@ -32,6 +37,7 @@ namespace Tritium {
 		// METADATA
 		RenderBackend* render_backend;
 		Logger* logger;
+		ThreadPool::Pool* thread_pool;
 		string application_name;
 		string application_description;
 		vector<string> application_authors;

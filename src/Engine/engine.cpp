@@ -7,6 +7,7 @@ namespace Tritium {
 	Engine::Engine(
 		RenderBackend* render_backend,
 		Logger* logger,
+		ThreadPool::Pool* thread_pool,
 		string application_name,
 		string application_description,
 		vector<string> application_authors,
@@ -17,6 +18,7 @@ namespace Tritium {
 	)
 		: render_backend(render_backend),
 		logger(logger),
+		thread_pool(thread_pool),
 		application_name(application_name),
 		application_description(application_description),
 		application_authors(application_authors),
